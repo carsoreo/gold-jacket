@@ -1,17 +1,20 @@
-// Picks which platform each season comes from, for leagues on Yahoo, Sleeper or both.
+// Picks which platform each season comes from, for leagues on Yahoo, Sleeper or both (in either order).
 // config (data/league.json, all optional):
-//   yahooThrough: last season taken from Yahoo          sleeperFrom: first season taken from Sleeper
-//   prefer: 'yahoo' | 'sleeper', which wins a year both platforms are allowed to supply (default 'yahoo')
-export function chooseSeasons({ yahoo = [], sleeper = [] }, config = {}) {
-  const ok = {
-    yahoo: (y) => config.yahooThrough == null || y <= config.yahooThrough,
-    sleeper: (y) => config.sleeperFrom == null || y >= config.sleeperFrom,
-  };
-  const all = [...yahoo.map((s) => ({ ...s, platform: 'yahoo' })), ...sleeper.map((s) => ({ ...s, platform: 'sleeper' }))]
-    .filter((s) => ok[s.platform](s.year));
+//   { yahoo: { from, through }, sleeper: { from, through, league }, prefer: 'yahoo' | 'sleeper' }
+// from/through limit the years a platform supplies; prefer settles a year both supply (default yahoo).
+export const PLATFORMS = ['yahoo', 'sleeper'];
+
+export const inRange = (range = {}, year) => (range.from == null || year >= range.from) && (range.through == null || year <= range.through);
+
+export function chooseSeasons(data, config = {}) {
   const first = config.prefer === 'sleeper' ? 'sleeper' : 'yahoo';
   const byYear = {};
-  for (const s of all) if (!byYear[s.year] || s.platform === first) byYear[s.year] = s;
+  for (const platform of PLATFORMS) {
+    for (const s of data[platform] ?? []) {
+      if (!inRange(config[platform], s.year)) continue;
+      if (!byYear[s.year] || platform === first) byYear[s.year] = { ...s, platform };
+    }
+  }
   return Object.values(byYear).toSorted((a, b) => a.year - b.year);
 }
 

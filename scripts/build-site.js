@@ -1,7 +1,7 @@
 // Builds the Hall of Fame page from the league data in data/:
 //   yahoo-history.json and/or sleeper-history.json (at least one), plus the matching -lineups.json (player stats)
 //   and -trades.json (trades), managers.json (optional { "other name": "name to show" } aliases) and league.json
-//   (optional: name, yahooThrough, sleeperFrom, prefer, sleeperLeague).
+//   (optional: name, yahoo/sleeper { from, through }, sleeper.league, prefer).
 // Writes index.html to SITE_OUT (default data/site). LEAGUE_NAME overrides league.json's name (default "The Boys").
 // Usage: [SITE_OUT=/srv/hall-of-fame] [LEAGUE_NAME="The Boys"] npm run site
 import fs from 'node:fs';

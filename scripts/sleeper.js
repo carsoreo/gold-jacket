@@ -12,17 +12,18 @@ const get = async (path) => {
   return res.json();
 };
 
-// data/league.json can hold the league id (sleeperLeague) and the first season to keep (sleeperFrom).
-const config = fs.existsSync('data/league.json') ? JSON.parse(fs.readFileSync('data/league.json', 'utf8')) : {};
-const start = process.argv[2] ?? config.sleeperLeague;
-const from = config.sleeperFrom ?? 0;
-if (!start) throw new Error('Usage: npm run sleeper -- <league id>  (or set sleeperLeague in data/league.json)');
+// data/league.json can set the league id and which seasons to keep: { "sleeper": { "league", "from", "through" } }.
+const { sleeper: range = {} } = fs.existsSync('data/league.json') ? JSON.parse(fs.readFileSync('data/league.json', 'utf8')) : {};
+const start = process.argv[2] ?? range.league;
+if (!start) throw new Error('Usage: npm run sleeper -- <league id>  (or set sleeper.league in data/league.json)');
 
 const players = await sleeperPlayers({ required: true });
 const history = [], lineups = {}, trades = {};
 for (let id = start; id && id !== '0';) {
   const league = await get(`/league/${id}`);
-  if (Number(league.season) < from) { console.log(`${league.season}: skipped (sleeperFrom is ${from})`); break; } // older seasons are older still
+  const year = Number(league.season);
+  if (range.from != null && year < range.from) { console.log(`${year}: skipped, before sleeper.from (${range.from})`); break; } // the rest are older still
+  if (range.through != null && year > range.through) { console.log(`${year}: skipped, after sleeper.through (${range.through})`); id = league.previous_league_id; continue; }
   const weeks = Array.from({ length: lastWeek(league) }, (_, i) => i + 1);
   const [users, rosters, bracket, drafts] = await Promise.all([get(`/league/${id}/users`), get(`/league/${id}/rosters`), get(`/league/${id}/winners_bracket`), get(`/league/${id}/drafts`)]);
   const matchups = Object.fromEntries(await Promise.all(weeks.map(async (w) => [w, await get(`/league/${id}/matchups/${w}`)])));
@@ -39,7 +40,7 @@ for (let id = start; id && id !== '0';) {
 }
 
 if (!history.length) {
-  console.log(`Nothing to save: no seasons from ${from} on yet. Existing files were left alone.`);
+  console.log('Nothing to save: no Sleeper seasons in the years data/league.json allows. Existing files were left alone.');
   process.exit(0);
 }
 fs.mkdirSync('data', { recursive: true });

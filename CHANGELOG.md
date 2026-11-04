@@ -2,6 +2,17 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.0.0 (2026-11-04)
+
+- **Breaking:** `data/league.json` sets each platform's years on its own, so switching works in either direction:
+  - Yahoo to Sleeper: `{ "yahoo": { "through": 2026 }, "sleeper": { "from": 2027 } }`
+  - Sleeper to Yahoo: `{ "sleeper": { "through": 2024 }, "yahoo": { "from": 2025 } }`
+  - The Sleeper league ID moves to `sleeper.league`.
+  - Replaces `yahooThrough`, `sleeperFrom` and `sleeperLeague`.
+- `npm run sleeper` also honors `sleeper.through`.
+- Sleeper-only leagues are covered by tests and the README.
+- Simpler README with a quick start.
+
 ## 1.2.0 (2026-11-04)
 
 - `data/league.json` sets up a platform switch:
