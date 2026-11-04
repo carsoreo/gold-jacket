@@ -14,7 +14,7 @@ Example: https://theboysff.duckdns.org
 - **Players:** best player games, each manager's top players, best and worst draft picks, best drafters.
 - **Trades:** most lopsided trades, trade records, every trade.
 - **Rivalries:** head-to-head records between any two managers.
-- **Drafts:** every draft board, with grades.
+- **Drafts:** every draft board with grades, or one manager's draft pick by pick.
 
 The Players and Trades tabs, and draft grades, appear once you've collected lineups and trades.
 
@@ -120,7 +120,7 @@ Anyone left out shows up as a separate manager. The same file also merges a nick
 ## How the numbers work
 
 - **Draft value:** where a player was taken at his position versus where he finished at it. "Claimed WR49, finished WR4" is +45. Keepers count as taken before the draft.
-- **Draft grades** rank each season's managers by the total value of their picks.
+- **Draft grades:** each pick is compared with what picks at that spot at that position have scored in your league (the 12th WR claimed, say). A draft's grade is those differences added up, measured against every draft in league history, so a strong year can have several A's and a weak one none. Keepers aren't graded.
 - **Trade winners** are the side whose new players scored more for them over the rest of that season. Draft picks are listed but not scored.
 
 ## Hosting

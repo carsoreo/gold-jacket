@@ -2,6 +2,11 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.1.0 (2026-11-04)
+
+- New draft grades. Each pick is compared with what picks at that spot at that position usually score in the league. The expected points come from a curve fitted so it never rises later in the draft. A draft's grade is those differences added up, measured against every draft in league history, with no forced curve (an A is one standard deviation above the average draft). Best drafters use the same points.
+- The Drafts tab has a manager dropdown: pick a manager to see their draft pick by pick, with points, expected points and value. Names in the grade list open that manager's draft.
+
 ## 2.0.3 (2026-11-04)
 
 - A season in progress keeps every week that's final. The Yahoo history collector records it from Yahoo's "Week N Matchups" status, and Sleeper from its last scored week. Before, the latest week was always left out, even once it was final.

@@ -3,7 +3,8 @@
 const BENCH = new Set(['BN', 'IR']);
 const name = (n) => n.replace(/[\uE000-\uF8FF]/g, '').replace(/\s+/g, ' ').trim(); // strips Yahoo's icon glyphs
 const round2 = (n) => Math.round(n * 100) / 100;
-const GRADES = ['A', 'A', 'B', 'B', 'C', 'C', 'D', 'D', 'F', 'F'];
+// Letter grades by how far a draft's value sits from the league's average draft, in standard deviations.
+const gradeFor = (z) => (z >= 1 ? 'A' : z >= 0.35 ? 'B' : z > -0.35 ? 'C' : z > -1 ? 'D' : 'F');
 
 // positions: optional fallback { normalizedName: 'RB' } (from Sleeper's player list) for players who never started.
 export function playerStats(history, lineups, top = 10, positions = {}) {
@@ -82,7 +83,7 @@ function positionOf(rows, positions) {
 // number of kept players at his position plus his order among real picks. Finish: his rank by points among every
 // player at that position that season (kept, drafted or picked up), capped at the number of players claimed there.
 // Surplus = draft spot minus finish (claimed WR46, finished WR5 = +41). Draft grades rank managers by the total
-// surplus of their real picks.
+// value of their real picks: points above what that draft spot usually scores (see below).
 function draftGrades(history, rows, top, posOf) {
   const pts = {};
   for (const r of rows) pts[`${r.year}|${r.name}`] = (pts[`${r.year}|${r.name}`] ?? 0) + r.points;
@@ -124,22 +125,52 @@ function draftGrades(history, rows, top, posOf) {
         p.surplus = p.posSlot - Math.min(p.posRank ?? Infinity, claimedAt[p.pos].length);
       });
     }
-    const teams = Object.values(Object.groupBy(picks, (p) => p.manager))
-      .map((g) => ({ manager: g[0].manager, value: g.reduce((a, p) => a + p.surplus, 0), points: round2(g.reduce((a, p) => a + p.points, 0)) }))
-      .toSorted((a, b) => b.value - a.value || b.points - a.points).map((t, i, list) => ({ ...t, grade: GRADES[Math.floor((i * GRADES.length) / list.length)] }));
-    bySeason[s.year] = {
-      points: Object.fromEntries(all.map((p) => [p.overall, p.points])),
-      keepers: all.filter((p) => p.keeper).map((p) => p.overall),
-      teams,
-      steals: picks.filter((p) => p.points > 0).toSorted((a, b) => b.surplus - a.surplus).slice(0, 5),
-      busts: picks.filter((p) => p.round <= 3).toSorted((a, b) => a.surplus - b.surplus).slice(0, 5),
+    bySeason[s.year] = { all, picks };
+  }
+
+  // Expected points for a draft spot: the league's own history of what picks claimed at that spot at that
+  // position scored. It's fitted so it never rises later in the draft (isotonic regression, weighted by how many
+  // picks each spot has): thin spots borrow from their neighbors, and the overall average stays the same, so an
+  // average draft comes out near zero. In keeper years the first players at a position are mostly kept, which is
+  // why the raw numbers are thin and bumpy there. Value = points - expected.
+  const real = Object.values(bySeason).flatMap((d) => d.picks);
+  const curve = {};
+  for (const [pos, ps] of Object.entries(Object.groupBy(real, (p) => p.pos))) {
+    const blocks = []; // pool adjacent violators: each block is { slots, sum, n }
+    for (const [slot, g] of Object.entries(Object.groupBy(ps, (p) => p.posSlot)).toSorted((x, y) => x[0] - y[0])) {
+      blocks.push({ slots: [Number(slot)], sum: g.reduce((a, p) => a + p.points, 0), n: g.length });
+      while (blocks.length > 1 && blocks.at(-2).sum / blocks.at(-2).n < blocks.at(-1).sum / blocks.at(-1).n) {
+        const last = blocks.pop(), prev = blocks.at(-1);
+        prev.slots.push(...last.slots); prev.sum += last.sum; prev.n += last.n;
+      }
+    }
+    curve[pos] = {};
+    for (const b of blocks) for (const slot of b.slots) curve[pos][slot] = b.sum / b.n;
+  }
+  for (const p of real) { p.expected = round2(curve[p.pos][p.posSlot]); p.value = round2(p.points - p.expected); }
+
+  // A draft is graded on its picks' total value, against every draft in league history: no forced curve.
+  const drafts = Object.entries(bySeason).flatMap(([year, d]) => Object.values(Object.groupBy(d.picks, (p) => p.manager))
+    .map((g) => ({ year: Number(year), manager: g[0].manager, value: round2(g.reduce((a, p) => a + p.value, 0)), points: round2(g.reduce((a, p) => a + p.points, 0)) })));
+  const mean = drafts.reduce((a, t) => a + t.value, 0) / (drafts.length || 1);
+  const sd = Math.sqrt(drafts.reduce((a, t) => a + (t.value - mean) ** 2, 0) / (drafts.length || 1)) || 1;
+  for (const t of drafts) t.grade = gradeFor((t.value - mean) / sd);
+
+  for (const [year, d] of Object.entries(bySeason)) {
+    bySeason[year] = {
+      points: Object.fromEntries(d.all.map((p) => [p.overall, p.points])),
+      keepers: d.all.filter((p) => p.keeper).map((p) => p.overall),
+      teams: drafts.filter((t) => t.year === Number(year)).toSorted((a, b) => b.value - a.value),
+      picks: d.all.map((p) => ({ overall: p.overall, round: p.round, player: p.player, manager: p.manager, pos: p.pos, keeper: p.keeper, points: p.points, expected: p.expected ?? null, value: p.value ?? null, posSlot: p.posSlot ?? null, posRank: p.posRank ?? null })),
+      steals: d.picks.filter((p) => p.points > 0).toSorted((a, b) => b.surplus - a.surplus).slice(0, 5),
+      busts: d.picks.filter((p) => p.round <= 3).toSorted((a, b) => a.surplus - b.surplus).slice(0, 5),
     };
   }
   const seasons = Object.values(bySeason);
-  // Best drafters: every graded season added up.
-  const drafters = Object.entries(Object.groupBy(Object.entries(bySeason).flatMap(([year, d]) => d.teams.map((t) => ({ ...t, year: Number(year) }))), (t) => t.manager))
+  // Best drafters: average value per draft, every graded season.
+  const drafters = Object.entries(Object.groupBy(drafts, (t) => t.manager))
     .map(([manager, ts]) => ({
-      manager, seasons: ts.length, value: ts.reduce((a, t) => a + t.value, 0),
+      manager, seasons: ts.length, value: round2(ts.reduce((a, t) => a + t.value, 0)),
       grades: ts.toSorted((a, b) => a.year - b.year).map((t) => t.grade).join(''),
       best: ts.toSorted((a, b) => b.value - a.value)[0],
     }))

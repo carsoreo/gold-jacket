@@ -102,6 +102,8 @@
   .grades .award { grid-template-columns: 44px 1fr; }
   .grades .award dt { font: 400 26px/1 var(--stencil); letter-spacing: 0; color: var(--chalk); }
 
+  button.link { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--chalk-3); text-underline-offset: 3px; }
+  @media (hover: hover) and (pointer: fine) { button.link:hover { text-decoration-color: var(--flag); } }
   .callout { display: flex; align-items: center; gap: 20px; padding: 16px 0 18px; border-top: 2px solid var(--chalk); border-bottom: 1px solid var(--line); }
   .callout .big { font: 400 clamp(56px, 14vw, 88px)/1 var(--stencil); color: var(--flag); }
   .callout b { font: 800 22px var(--label); letter-spacing: .08em; text-transform: uppercase; }
@@ -248,8 +250,8 @@ if (P) {
     ${list('Best draft picks', P.drafts.steals.map((r) => [signed(r.surplus), `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `${r.year} · ${climb(r)}`]), 'Spots climbed at his position, from where he was claimed (keepers go first) to where he finished among everyone at that position.')}
     ${list('Worst early picks', P.drafts.busts.map((r) => [signed(r.surplus), `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `${r.year} · ${climb(r)}`]), 'Rounds 1–3: spots dropped at his position. A pick can drop no lower than the last player claimed there.')}
   </div>
-  <h2>Best drafters</h2><p class="note">Average spots each manager's picks climbed at their positions per season, keepers left out. Grades are by season, oldest first.</p>
-  ${table([['Manager'], ['Per season', 'r'], ['Total', 'r'], ['Grades'], ['Best draft']], P.drafts.drafters.map((d, i) => `<tr><td class="name">${esc(d.manager)}</td><td class="r">${i === 0 ? `<span class="flag">${signed(d.perSeason)}</span>` : signed(d.perSeason)}</td><td class="r">${signed(d.value)}</td><td>${d.grades.split('').join(' ')}</td><td>${d.best.year} <span class="dim">(${signed(d.best.value)})</span></td></tr>`))}
+  <h2>Best drafters</h2><p class="note">Average points per draft above what those draft spots usually score, keepers left out. Grades are by season, oldest first.</p>
+  ${table([['Manager'], ['Per season', 'r'], ['Total', 'r'], ['Grades'], ['Best draft']], P.drafts.drafters.map((d, i) => `<tr><td class="name">${esc(d.manager)}</td><td class="r">${i === 0 ? `<span class="flag">${signed(d.perSeason)}</span>` : signed(d.perSeason)}</td><td class="r">${signed(Math.round(d.value))}</td><td>${d.grades.split('').join(' ')}</td><td>${d.best.year} <span class="dim">(${signed(Math.round(d.best.value))})</span></td></tr>`))}
   <h2>Each manager's top players</h2><p class="note">Most points in that manager's starting lineup, all seasons.</p>
   ${table([['Manager'], ['Top player'], ['Pts', 'r'], ['Second'], ['Pts', 'r'], ['Third'], ['Pts', 'r']], P.mvps.map((m) => `<tr><td class="name">${esc(m.manager)}</td>${[0, 1, 2].map((i) => m.players[i] ? `<td>${esc(m.players[i].name)}</td><td class="r">${pts(m.players[i].points)}</td>` : '<td></td><td></td>').join('')}</tr>`))}`;
 }
@@ -295,19 +297,47 @@ $('#ra').onchange = $('#rb').onchange = pick; rivalry();
 $('#rivals').addEventListener('click', (e) => { const c = e.target.closest('.matrix button'); if (c) { $('#ra').value = c.dataset.a; $('#rb').value = c.dataset.b; pick(); $('#ra').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
 
 // Drafts
+const signedPts = (n) => (n > 0 ? '+' : '') + pts(n);
+// One manager's draft: every pick in order, with what it scored against what that spot usually scores.
+function managerDraft(s, g, who) {
+  const mine = s.draft.map((d, i) => [d, i + 1]).filter(([d]) => d[3] === who);
+  if (!mine.length) return `<p class="note">${esc(who)} didn't draft this season.</p>`;
+  const team = g?.teams.find((t) => t.manager === who);
+  const byPick = Object.fromEntries((g?.picks ?? []).map((p) => [p.overall, p]));
+  const head = team ? `<div class="callout"><span class="big">${team.grade}</span><div><b>${esc(who)}'s ${s.year} draft</b><small>${signedPts(team.value)} points above expected, ${pts(team.points)} points from real picks</small></div></div>` : `<h2>${esc(who)}'s ${s.year} draft</h2>`;
+  const rows = mine.map(([d, n]) => {
+    const p = byPick[n];
+    const value = !p ? '' : p.keeper ? '<span class="dim">kept</span>' : signedPts(p.value);
+    return `<tr><td>${d[0]}</td><td class="r">${n}</td><td class="name">${esc(d[2])}${p?.keeper ? '<span class="po">Keeper</span>' : ''}</td><td>${p?.pos && p.pos !== 'UNK' ? p.pos : ''}</td><td class="r">${p ? pts(p.points) : ''}</td><td class="r">${p && !p.keeper ? pts(p.expected) : ''}</td><td class="r">${p && !p.keeper && p.value === Math.max(...mine.map(([, k]) => byPick[k]).filter((x) => x && !x.keeper).map((x) => x.value)) ? `<span class="flag">${value}</span>` : value}</td></tr>`;
+  });
+  return head + table([['Rd'], ['Overall', 'r'], ['Player'], ['Pos'], ['Pts', 'r'], ['Expected', 'r'], ['Value', 'r']], rows) +
+    (g ? `<p class="note">Expected is what picks at that spot at that position have scored in this league, on average. Keepers aren't graded.</p>` : '<p class="note">Points and grades come once the season is over.</p>');
+}
 function draft(year) {
   const s = D.seasons.find((x) => x.year == year);
+  const who = $('#dm').value;
   if (!s.draft.length) return ($('#draft').innerHTML = '<p class="note">No draft results for this season.</p>');
   const g = P?.drafts.bySeason[year];
+  if (who) return ($('#draft').innerHTML = managerDraft(s, g, who));
   const rounds = Math.max(...s.draft.map((d) => d[0]));
   const perRound = s.draft.filter((d) => d[0] === 1).length;
-  const grades = g ? `<h2>Draft grades</h2><p class="note">Ranked by how many spots each manager's picks climbed at their positions, added up. Keepers don't count.</p><dl class="awards grades">${g.teams.map((t, i) => `<div class="award${i === 0 ? ' top' : ''}"><dt>${t.grade}</dt><dd>${esc(t.manager)} <small>${(t.value > 0 ? '+' : '') + t.value} spots</small></dd></div>`).join('')}</dl>
+  const grades = g ? `<h2>Draft grades</h2><p class="note">Points each manager's picks scored above what those draft spots usually score in this league, added up. Graded against every draft since ${D.seasons[0].year}. Keepers don't count.</p><dl class="awards grades">${g.teams.map((t, i) => `<div class="award${i === 0 ? ' top' : ''}"><dt>${t.grade}</dt><dd><button class="link" data-who="${esc(t.manager)}">${esc(t.manager)}</button> <small>${signedPts(t.value)} pts</small></dd></div>`).join('')}</dl>
     <div class="board">${list('Best value', g.steals.map((r) => [(r.surplus > 0 ? '+' : '') + r.surplus, `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `claimed ${r.pos}${r.posSlot}, ${r.posRank ? `finished ${r.pos}${r.posRank}` : 'never played'}`]))}${list('Worst early picks', g.busts.map((r) => [r.surplus, `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `claimed ${r.pos}${r.posSlot}, ${r.posRank ? `finished ${r.pos}${r.posRank}` : 'never played'}`]))}</div><h2>Draft board</h2>` : '';
   $('#draft').innerHTML = grades + table([['Rd'], ...Array.from({ length: perRound }, (_, i) => [`Pick ${i + 1}`])], Array.from({ length: rounds }, (_, r) =>
     `<tr><th scope="row">${r + 1}</th>${s.draft.map((d, i) => [d, i + 1]).filter(([d]) => d[0] === r + 1).map(([d, n]) => `<td><b>${esc(d[2])}</b>${g?.keepers.includes(n) ? '<span class="po">Keeper</span>' : ''}<small>${esc(d[3])}${g ? ` · ${pts(g.points[n])}` : ''}</small></td>`).join('')}</tr>`), 'draft');
 }
-$('#drafts').innerHTML = `<div class="picker"><h2>Draft</h2><select id="dy" aria-label="Draft season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select></div><div id="draft"></div><p class="note">Scroll the board sideways for every pick.</p>`;
-$('#dy').onchange = (e) => { draft(e.target.value); enter($('#draft'), { y: 0, ms: 150 }); }; draft($('#dy').value);
+// The manager list follows the season, since managers change.
+const draftManagers = (year) => {
+  const s = D.seasons.find((x) => x.year == year); const keep = $('#dm').value;
+  const names = [...new Set(s.draft.map((d) => d[3]).filter(Boolean))].toSorted((a, b) => a.localeCompare(b));
+  $('#dm').innerHTML = `<option value="">Whole board</option>${names.map((n) => `<option ${n === keep ? 'selected' : ''}>${esc(n)}</option>`).join('')}`;
+};
+$('#drafts').innerHTML = `<div class="picker"><h2>Draft</h2><select id="dy" aria-label="Draft season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select><select id="dm" aria-label="Manager"></select></div><div id="draft"></div><p class="note">Scroll the board sideways for every pick.</p>`;
+const redraw = () => { draft($('#dy').value); enter($('#draft'), { y: 0, ms: 150 }); };
+$('#dy').onchange = () => { draftManagers($('#dy').value); redraw(); };
+$('#dm').onchange = redraw;
+$('#drafts').addEventListener('click', (e) => { const b = e.target.closest('button.link'); if (b) { $('#dm').value = b.dataset.who; redraw(); } });
+draftManagers($('#dy').value); draft($('#dy').value);
 
 const start = tabs.some(([id]) => id === location.hash.slice(1)) ? location.hash.slice(1) : 'hall';
 // First paint: place the bar without sliding, then lay the field once (champions in a stagger, the hash rail chalked left to right).

@@ -85,3 +85,17 @@ test('weeks a team had no game, and injured reserve, are left out of games and b
 test('no lineups means no player stats', () => {
   assert.equal(playerStats(buildHistory([season]), {}), null);
 });
+
+test('draft value is points above what that spot usually scores, and grades are not forced onto a curve', () => {
+  // Two seasons, each with two RB picks; the first RB claimed is expected to outscore the second.
+  const s = (year, first, second) => ({ ...season, year, draft: [{ round: 1, pick: 1, player: `${year} A`, team: 1 }, { round: 1, pick: 2, player: `${year} B`, team: 2 }] , lineup: [first, second] });
+  const a = s(2023, 100, 50), b = s(2024, 100, 50);
+  const lu = Object.fromEntries([a, b].map((x) => [x.year, [1, 2, 3].flatMap((w) => [
+    { w, t: 1, p: [[1, `${x.year} A`, 'RB', x.lineup[0] / 3]] }, { w, t: 2, p: [[2, `${x.year} B`, 'RB', x.lineup[1] / 3]] },
+  ])]));
+  const d = playerStats(buildHistory([a, b]), lu).drafts;
+  const pick = d.bySeason[2024].picks.find((p) => p.player === '2024 A');
+  assert.deepEqual([pick.expected, pick.value], [100, 0]); // the first RB claimed always scored 100
+  // Every draft did exactly what its spots usually do, so every grade is the same: no forced A's or F's.
+  assert.deepEqual([...new Set(Object.values(d.bySeason).flatMap((x) => x.teams.map((t) => t.grade)))], ['C']);
+});
