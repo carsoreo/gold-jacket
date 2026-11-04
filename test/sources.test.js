@@ -35,6 +35,12 @@ test('a Sleeper-only league builds without any Yahoo data', () => {
   assert.equal(buildHistory(picked).seasons[0].champion.manager, 'ann');
 });
 
+test('a Yahoo-only league needs no league.json', () => {
+  const picked = chooseSeasons({ yahoo: [season(2020), season(2021)] });
+  assert.deepEqual(years(picked), ['2020 yahoo', '2021 yahoo']);
+  assert.deepEqual(pickByYear(picked, { yahoo: { 2020: [1], 2021: [2] }, sleeper: {} }), { 2020: [1], 2021: [2] });
+});
+
 test('lineups and trades follow the platform their season came from', () => {
   const picked = chooseSeasons({ yahoo: [season(2025), season(2026)], sleeper: [season(2026), season(2027)] }, { sleeper: { from: 2027 } });
   const data = { yahoo: { 2025: [1], 2026: [2] }, sleeper: { 2026: [99], 2027: [3] } };

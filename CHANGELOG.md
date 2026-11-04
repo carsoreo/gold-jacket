@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.0.1 (2026-11-04)
+
+- The README's quick start has one path each for Sleeper-only, Yahoo-only and switched leagues. A test covers Yahoo-only leagues.
+
 ## 2.0.0 (2026-11-04)
 
 - **Breaking:** `data/league.json` sets each platform's years on its own, so switching works in either direction:

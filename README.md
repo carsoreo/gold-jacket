@@ -27,13 +27,19 @@ git clone https://github.com/carsoreo/league-hall-of-fame.git
 cd league-hall-of-fame
 ```
 
-Then collect your league's data, below, and build:
+Then collect your league's data and build. Pick your setup:
+
+| Your league is on | Do this |
+|---|---|
+| **Sleeper only** | `npm run sleeper -- <league id>` ([details](#sleeper)) |
+| **Yahoo only** | Run the Yahoo scripts in your browser ([details](#yahoo)) |
+| **Both** (you switched) | Collect both, then add `data/league.json` ([details](#leagues-that-switched-platforms)) |
 
 ```bash
 npm run site
 ```
 
-Open `data/site/index.html` in a browser.
+Open `data/site/index.html` in a browser. No `data/league.json` is needed for a single-platform league.
 
 ## Collecting your data
 
