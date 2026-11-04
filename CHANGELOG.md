@@ -2,6 +2,15 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.0.2 (2026-11-04)
+
+- Weeks a team had no game (a playoff bye, or knocked out) no longer count toward best player games, bench points, top players or trades. A team's top "points left on the bench" was a bye week.
+- Injured reserve no longer counts as points left on the bench.
+- Trades are dated from the week of the trade. A player traded back to a team he'd been on before was credited from his first stint.
+- Draft names drop the team and position Yahoo adds for the current season, so 2026's picks match their lineups.
+- An unfinished season's table says "Standings", not "Final standings".
+- The footer names the platforms the data actually came from.
+
 ## 2.0.1 (2026-11-04)
 
 - The README's quick start has one path each for Sleeper-only, Yahoo-only and switched leagues. A test covers Yahoo-only leagues.

@@ -43,6 +43,7 @@ for (const a of names) for (const b of names) if (a !== b) {
 }
 const data = {
   league: process.env.LEAGUE_NAME ?? config.name ?? 'The Boys', built: new Date().toISOString().slice(0, 10),
+  platforms: [...new Set(seasons.map((x) => ({ yahoo: 'Yahoo', sleeper: 'Sleeper' })[x.platform]))],
   managers: h.managers, records: h.records, awards: h.awards, rivalries, players, trades,
   seasons: h.seasons.map((s) => ({ year: s.year, complete: s.complete, champion: s.champion?.manager, teams: s.teams, draft: s.draft.map((d) => [d.round, d.pick, d.player, d.manager]) })),
 };

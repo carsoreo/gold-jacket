@@ -10,14 +10,17 @@ export function playerStats(history, lineups, top = 10, positions = {}) {
   const rows = lineupRows(history, lineups);
   if (!rows.length) return null;
 
-  const bestGames = rows.filter((r) => r.started).toSorted((a, b) => b.points - a.points).slice(0, top);
+  // A team with no game that week (a playoff bye, or knocked out) scored nothing, so its lineup doesn't count here.
+  const played = rows.filter((r) => r.played);
+  const bestGames = played.filter((r) => r.started).toSorted((a, b) => b.points - a.points).slice(0, top);
 
-  const benchWeeks = Object.values(Object.groupBy(rows.filter((r) => !r.started), (r) => `${r.year}|${r.week}|${r.team}`))
+  // Bench only: injured reserve can't be started, so it isn't points "left on the bench".
+  const benchWeeks = Object.values(Object.groupBy(played.filter((r) => r.slot === 'BN'), (r) => `${r.year}|${r.week}|${r.team}`))
     .map((g) => ({ year: g[0].year, week: g[0].week, manager: g[0].manager, points: round2(g.reduce((a, r) => a + r.points, 0)), best: g.toSorted((a, b) => b.points - a.points)[0] }))
     .toSorted((a, b) => b.points - a.points).slice(0, top);
 
   // Each manager's MVPs: most points scored in their starting lineup, all seasons.
-  const mvps = Object.entries(Object.groupBy(rows.filter((r) => r.started), (r) => r.manager)).map(([manager, rs]) => ({
+  const mvps = Object.entries(Object.groupBy(played.filter((r) => r.started), (r) => r.manager)).map(([manager, rs]) => ({
     manager,
     players: Object.entries(Object.groupBy(rs, (r) => r.name))
       .map(([name, g]) => ({ name, points: round2(g.reduce((a, r) => a + r.points, 0)), seasons: [...new Set(g.map((r) => r.year))] }))
@@ -27,7 +30,9 @@ export function playerStats(history, lineups, top = 10, positions = {}) {
   return { bestGames, benchWeeks, mvps, drafts: draftGrades(history, rows, top, positionOf(rows, positions)) };
 }
 
-// Every player-week in the finished weeks: { year, week, team, manager, name, slot, points, started }.
+// Every player-week in the finished weeks: { year, week, team, manager, name, slot, points, started, played }.
+// played: the team had a game that week. Draft value still counts every week, since a player's points are real
+// even when his fantasy team had a bye.
 export function lineupRows(history, lineups) {
   const rows = [];
   for (const s of history.seasons) {
@@ -36,6 +41,7 @@ export function lineupRows(history, lineups) {
     const weeks = new Set(s.games.map((g) => g.week));
     const score = {};
     for (const g of s.games) for (const x of [g.a, g.b]) score[`${g.week}|${x.id}`] = x.points;
+    const inGame = (w, t) => score[`${w}|${t}`] != null;
     for (const { w, t, p } of lineups[s.year] ?? []) {
       if (!weeks.has(w) || !byId[t]) continue;
       // Yahoo hides some players' points behind a "Bye" label (null here). When one starter is the only unknown,
@@ -46,7 +52,7 @@ export function lineupRows(history, lineups) {
       for (const row of p) {
         const [, rawName, slot, pts] = row;
         const points = pts ?? (row === unknown[0] && fill != null ? fill : 0);
-        rows.push({ year: s.year, week: w, team: t, manager: byId[t].manager, name: name(rawName), slot, points, started: !BENCH.has(slot) });
+        rows.push({ year: s.year, week: w, team: t, manager: byId[t].manager, name: name(rawName), slot, points, started: !BENCH.has(slot), played: inGame(w, t) });
       }
     }
   }

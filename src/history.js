@@ -2,6 +2,8 @@
 // ({ year, teams: [{ id, name, manager, rank, wins, losses, ties, pf, pa }], weeks: [{ week, games: [[{ team, points }, …]] }], draft, playoffStart }).
 
 const round2 = (n) => Math.round(n * 100) / 100;
+// Yahoo's draft page for a current season adds the player's team and position ("Jeremiyah Love (Ari - RB)").
+const draftName = (n) => String(n ?? '').replace(/\s*\([A-Za-z]{2,4} - [A-Z,/]+\)\s*$/, '');
 
 export function buildHistory(rawSeasons, aliases = {}) {
   const who = (m) => aliases[m] ?? m;
@@ -19,7 +21,7 @@ export function buildHistory(rawSeasons, aliases = {}) {
     return {
       year: s.year, platform: s.platform ?? 'yahoo', keepersKnown: !!s.keepersKnown, complete, playoffStart, teams, games,
       champion: complete ? teams.find((t) => t.rank === 1) : null,
-      draft: (s.draft ?? []).map((d) => ({ ...d, manager: byId[d.team]?.manager, teamName: byId[d.team]?.name })),
+      draft: (s.draft ?? []).map((d) => ({ ...d, player: draftName(d.player), manager: byId[d.team]?.manager, teamName: byId[d.team]?.name })),
     };
   });
   return { seasons, managers: managerTable(seasons), records: recordBook(seasons), awards: seasons.filter((s) => s.complete).map(seasonAwards) };

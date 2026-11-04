@@ -31,3 +31,8 @@ test('head to head counts every meeting from one side, skipping a week still in 
   const r = headToHead(buildHistory(seasons, { AnnCommish: 'Ann' }), 'Bob', 'Ann');
   assert.deepEqual([r.wins, r.losses, r.ties], [1, 2, 0]); // 2025 week 1 is the unfinished season's latest week
 });
+
+test("draft names lose the team and position Yahoo adds for the current season", () => {
+  const s = { ...seasons[0], draft: [{ round: 1, pick: 1, player: 'Jeremiyah Love (Ari - RB)', team: 1 }, { round: 1, pick: 2, player: 'Amon-Ra St. Brown (Det - WR)', team: 2 }] };
+  assert.deepEqual(buildHistory([s]).seasons[0].draft.map((d) => d.player), ['Jeremiyah Love', 'Amon-Ra St. Brown']);
+});

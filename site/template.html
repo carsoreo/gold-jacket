@@ -165,7 +165,7 @@ const live = D.seasons.find((s) => !s.complete);
 document.title = `${D.league} Hall of Fame`;
 $('#title').textContent = D.league;
 $('#sub').innerHTML = `<b>Hall of Fame</b> · Est. ${D.seasons[0].year} · ${D.seasons.length} season${D.seasons.length === 1 ? '' : 's'} · ${D.managers.length} managers`;
-$('#foot').textContent = `Updated ${D.built} · Data from Yahoo`;
+$('#foot').textContent = `Updated ${D.built} · Data from ${D.platforms.join(' and ')}`;
 
 // Tabs
 const tabs = [['hall', 'Hall'], ['seasons', 'Seasons'], ['records', 'Record Book'], ...(D.players ? [['players', 'Players']] : []), ...(D.trades ? [['trades', 'Trades']] : []), ['rivals', 'Rivalries'], ['drafts', 'Drafts']];
@@ -214,7 +214,7 @@ function season(year) {
     ${row('Unluckiest', `${esc(a.unluckiest.manager)} <small>${pts(a.unluckiest.pa)} against</small>`)}
     ${row('Luckiest', `${esc(a.luckiest.manager)} <small>${pts(a.luckiest.pa)} against</small>`)}
   </dl>` : '<p class="note">Season in progress. Standings are as of the last finished week.</p>') +
-  `<h2>Final standings</h2>` +
+  `<h2>${s.complete ? 'Final standings' : 'Standings'}</h2>` +
   table([[s.complete ? 'Finish' : 'Rank'], ['Team'], ['Manager'], ['Record', 'r'], ['PF', 'r'], ['PA', 'r']],
     s.teams.map((t) => `<tr><td>${s.complete ? (t.rank === 1 ? `<span class="flag">${ord(t.rank)}</span>` : ord(t.rank)) : t.rank}</td><td>${esc(t.name)}</td><td class="name">${esc(t.manager)}</td><td class="r">${rec(t.wins, t.losses, t.ties)}</td><td class="r">${pts(t.pf)}</td><td class="r">${pts(t.pa)}</td></tr>`));
 }

@@ -71,6 +71,17 @@ test('draft spot counts keepers first, and finish ranks against every player at 
   assert.deepEqual([sleeper.posSlot, sleeper.posRank, sleeper.surplus], [2, 2, 0]); // 2nd RB claimed (after kept Bust), 2nd RB in points
 });
 
+test('weeks a team had no game, and injured reserve, are left out of games and bench points', () => {
+  const bye = { ...season, teams: [...season.teams, team(3, 'Cy', 3, 0, 0, 0, 0)] }; // Cy never plays
+  const lu = structuredClone(lineups);
+  lu[2024].push({ w: 1, t: 3, p: [[7, 'Bye Week Hero', 'QB', 99], [8, 'Cy Bench', 'BN', 80]] });
+  lu[2024][0].p.push([9, 'Hurt Guy', 'IR', 70]); // Ann week 1
+  const s = playerStats(buildHistory([bye]), lu);
+  assert.notEqual(s.bestGames[0].name, 'Bye Week Hero');
+  assert.ok(!s.benchWeeks.some((b) => b.manager === 'Cy'));
+  assert.equal(s.benchWeeks[0].points, 40); // Ann's Benchwarmer, not Hurt Guy on IR
+});
+
 test('no lineups means no player stats', () => {
   assert.equal(playerStats(buildHistory([season]), {}), null);
 });
