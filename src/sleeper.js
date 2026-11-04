@@ -56,6 +56,7 @@ export function toSeason({ league, users, rosters, matchups, bracket, picks, com
   return {
     year: Number(league.season), leagueId: league.league_id, platform: 'sleeper', keepersKnown: true, teams, weeks,
     playoffStart: league.settings?.playoff_week_start, playoffTeams: league.settings?.playoff_teams,
+    finalThrough: league.settings?.last_scored_leg, // the last week Sleeper has finished scoring
     draft: (picks ?? []).toSorted((a, b) => a.pick_no - b.pick_no).map((p) => ({
       round: p.round, pick: ((p.pick_no - 1) % size) + 1, player: playerName(players, p.player_id), team: p.roster_id, keeper: !!p.is_keeper,
     })),

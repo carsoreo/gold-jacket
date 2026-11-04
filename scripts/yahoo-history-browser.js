@@ -33,7 +33,11 @@ const SEASONS = [[2020, 20528], [2021, 23769], [2022, 137985], [2023, 353218], [
     }
 
     // Final standings: for a finished season Yahoo's rank is the final (playoff) finish.
-    const tbl = [...(await page(`${base}?lhst=stand`)).querySelectorAll('table')].find((t) => /W-L-T/.test(t.querySelector('tr')?.textContent));
+    const home = await page(`${base}?lhst=stand`);
+    // How far the season is final, from the home page's "Week 9 Matchups  Not started yet" (or "In progress").
+    const status = clean(home.body.textContent).match(/Week (\d+) Matchups (Not started yet|In progress|Final results)/);
+    if (status) s.finalThrough = Number(status[1]) - (status[2] === 'Final results' ? 0 : 1);
+    const tbl = [...home.querySelectorAll('table')].find((t) => /W-L-T/.test(t.querySelector('tr')?.textContent));
     if (tbl) {
       const head = [...tbl.querySelectorAll('tr')[0].children].map((c) => clean(c.textContent));
       for (const tr of [...tbl.querySelectorAll('tr')].slice(1)) {

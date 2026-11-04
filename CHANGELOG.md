@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.0.3 (2026-11-04)
+
+- A season in progress keeps every week that's final. The Yahoo history collector records it from Yahoo's "Week N Matchups" status, and Sleeper from its last scored week. Before, the latest week was always left out, even once it was final.
+
 ## 2.0.2 (2026-11-04)
 
 - Weeks a team had no game (a playoff bye, or knocked out) no longer count toward best player games, bench points, top players or trades. A team's top "points left on the bench" was a bye week.

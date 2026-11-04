@@ -15,8 +15,9 @@ export function buildHistory(rawSeasons, aliases = {}) {
       .filter((g) => g[0].points || g[1].points) // unplayed weeks show 0-0
       .map(([a, b]) => ({ year: s.year, week: w.week, playoff: w.week >= playoffStart, a: { ...byId[a.team], points: a.points }, b: { ...byId[b.team], points: b.points } })));
     const complete = games.some((g) => g.week === lastWeek);
-    // shortcut: an unfinished season's latest week may still be in progress, so it's left out until the next build
-    if (!complete) games = games.filter((g) => g.week < Math.max(...games.map((x) => x.week)));
+    // An unfinished season keeps only its final weeks: through finalThrough when the collector recorded it,
+    // otherwise everything but the latest week, which may still be in progress.
+    if (!complete) games = games.filter((g) => g.week <= (s.finalThrough ?? Math.max(...games.map((x) => x.week)) - 1));
     const teams = Object.values(byId).toSorted((a, b) => a.rank - b.rank);
     return {
       year: s.year, platform: s.platform ?? 'yahoo', keepersKnown: !!s.keepersKnown, complete, playoffStart, teams, games,

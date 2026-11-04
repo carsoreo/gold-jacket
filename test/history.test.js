@@ -36,3 +36,10 @@ test("draft names lose the team and position Yahoo adds for the current season",
   const s = { ...seasons[0], draft: [{ round: 1, pick: 1, player: 'Jeremiyah Love (Ari - RB)', team: 1 }, { round: 1, pick: 2, player: 'Amon-Ra St. Brown (Det - WR)', team: 2 }] };
   assert.deepEqual(buildHistory([s]).seasons[0].draft.map((d) => d.player), ['Jeremiyah Love', 'Amon-Ra St. Brown']);
 });
+
+test('an unfinished season keeps the weeks the collector marked final', () => {
+  const live = { ...seasons[1], finalThrough: 1 }; // 2025 in the fixture: week 1 played and final
+  assert.deepEqual(buildHistory([live]).seasons[0].games.map((g) => g.week), [1]);
+  const unknown = { ...seasons[1] };
+  assert.deepEqual(buildHistory([unknown]).seasons[0].games.map((g) => g.week), []); // latest week left out
+});
