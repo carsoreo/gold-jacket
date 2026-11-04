@@ -40,7 +40,7 @@ Sleeper's API is public, so one command collects everything:
 npm run sleeper -- <league id>
 ```
 
-Use the newest season's league ID, the number in `sleeper.com/leagues/<league id>`. The script follows each season back to the one before it and saves `sleeper-history.json`, `sleeper-lineups.json` and `sleeper-trades.json`. It takes under a minute, and you can rerun it any time during a season to pick up new weeks.
+Use the newest season's league ID, the number in `sleeper.com/leagues/<league id>`, or set `sleeperLeague` in [`data/league.json`](#leagues-that-changed-platforms). The script follows each season back to the one before it and saves `sleeper-history.json`, `sleeper-lineups.json` and `sleeper-trades.json`. It takes under a minute, and you can rerun it any time during a season to pick up new weeks.
 
 ### Yahoo
 
@@ -71,7 +71,20 @@ Options:
 
 A league that moved, for example from Yahoo to Sleeper, keeps one history. Collect each platform's seasons as above and the site joins them into one record book, one set of rivalries and one draft history.
 
-- **Each season comes from one platform.** A year uses Yahoo's copy if there is one, otherwise Sleeper's. A test Sleeper league for a season you also played on Yahoo is ignored.
+- **Each season comes from one platform.** By default a year uses Yahoo's copy if there is one, otherwise Sleeper's.
+- **Set the switch-over in `data/league.json`** (all optional):
+  ```json
+  { "name": "The Boys", "yahooThrough": 2026, "sleeperFrom": 2027, "sleeperLeague": "<league id>" }
+  ```
+  | Setting | Effect |
+  |---|---|
+  | `yahooThrough` | Last season taken from Yahoo |
+  | `sleeperFrom` | First season taken from Sleeper. `npm run sleeper` also stops there, so earlier Sleeper seasons, such as a test league set up before the move, are never collected. |
+  | `prefer` | `"yahoo"` (default) or `"sleeper"`: which platform wins a year both are allowed to supply |
+  | `sleeperLeague` | The Sleeper league ID, so `npm run sleeper` needs no argument. Update it each season, since Sleeper gives a renewed league a new ID. |
+  | `name` | League name in the title (`LEAGUE_NAME` overrides it) |
+
+  Set these before the move and nothing from Sleeper shows up until its first real season. Then `npm run sleeper` picks it up.
 - **Match people across platforms.** Sleeper usernames rarely match Yahoo nicknames, so map each Sleeper name to the name you want shown in `data/managers.json`:
   ```json
   { "carsoreo": "Carson", "henrythegreat": "Henry" }
@@ -91,7 +104,7 @@ This writes `data/site/index.html`, which opens directly in a browser. It needs 
 | Setting | Default | Purpose |
 |---|---|---|
 | `SITE_OUT` | `data/site` | Folder the page is written to |
-| `LEAGUE_NAME` | `The Boys` | League name in the title |
+| `LEAGUE_NAME` | `name` in `data/league.json`, else `The Boys` | League name in the title |
 
 On the first build, the site downloads Sleeper's public player list and refreshes it weekly. It's used to fill in positions for drafted players who never started a game.
 

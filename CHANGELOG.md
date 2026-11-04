@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 1.2.0 (2026-11-04)
+
+- `data/league.json` sets up a platform switch:
+  - `yahooThrough` and `sleeperFrom` say which years come from which platform, and `prefer` breaks a tie.
+  - `sleeperLeague` saves the league ID, and `name` sets the title.
+- `npm run sleeper` stops at `sleeperFrom`, so a Sleeper league set up before the move is never collected. When there's nothing to save, it leaves existing files alone.
+
 ## 1.1.0 (2026-11-04)
 
 - Sleeper leagues: `npm run sleeper -- <league id>` collects every season of a Sleeper league from Sleeper's public API, following each season back to the one before it. It covers history, weekly lineups and trades.
