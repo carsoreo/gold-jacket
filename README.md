@@ -1,6 +1,6 @@
-# league-hall-of-fame
+# gold-jacket
 
-[![test](https://github.com/carsoreo/league-hall-of-fame/actions/workflows/test.yml/badge.svg)](https://github.com/carsoreo/league-hall-of-fame/actions/workflows/test.yml)
+[![test](https://github.com/carsoreo/gold-jacket/actions/workflows/test.yml/badge.svg)](https://github.com/carsoreo/gold-jacket/actions/workflows/test.yml)
 
 A one-page Hall of Fame for your fantasy football league. It works with **Sleeper**, **Yahoo**, or both, for leagues that switched platforms.
 
@@ -23,8 +23,8 @@ The Players and Trades tabs, and draft grades, appear once you've collected line
 You need [Node.js](https://nodejs.org) 22 or newer.
 
 ```bash
-git clone https://github.com/carsoreo/league-hall-of-fame.git
-cd league-hall-of-fame
+git clone https://github.com/carsoreo/gold-jacket.git
+cd gold-jacket
 ```
 
 Then collect your league's data and build. Pick your setup:
