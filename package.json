@@ -1,0 +1,11 @@
+{
+  "name": "league-hall-of-fame",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A one-page Hall of Fame site for a fantasy football league, built from its Yahoo history.",
+  "scripts": {
+    "test": "node --test",
+    "site": "node scripts/build-site.js"
+  }
+}

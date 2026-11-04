@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-03T12:00:00-05:00",
+  "title": "Design System: The Boys Hall of Fame",
+  "extensions": {
+    "colorMeta": {
+      "flag-yellow": {
+        "role": "primary",
+        "displayName": "Flag Yellow",
+        "canonical": "#e8c547",
+        "tonalRamp": [
+          "#3d300a",
+          "#5e4b11",
+          "#806719",
+          "#a38423",
+          "#c6a330",
+          "#e8c547",
+          "#f0d77a",
+          "#f8ebbd"
+        ]
+      },
+      "endzone-green": {
+        "role": "neutral",
+        "displayName": "End-Zone Green",
+        "canonical": "#0f2a18",
+        "tonalRamp": [
+          "#081a0e",
+          "#0f2a18",
+          "#163a22",
+          "#1e4d2b",
+          "#2d6a3f",
+          "#4a8a5c",
+          "#7fb08c",
+          "#c3dcc9"
+        ]
+      },
+      "turf-green": {
+        "role": "neutral",
+        "displayName": "Turf Green",
+        "canonical": "#1e4d2b",
+        "tonalRamp": [
+          "#0b1f11",
+          "#12301b",
+          "#1e4d2b",
+          "#245a33",
+          "#33744a",
+          "#558f67",
+          "#8fb79a",
+          "#cfe2d4"
+        ]
+      },
+      "chalk": {
+        "role": "neutral",
+        "displayName": "Chalk",
+        "canonical": "#f4f4ee",
+        "tonalRamp": [
+          "#5b5d56",
+          "#7b7e76",
+          "#9c9f96",
+          "#bcbfb6",
+          "#d6d8d0",
+          "#e6e7e0",
+          "#f4f4ee",
+          "#fbfbf8"
+        ]
+      },
+      "chalk-soft": {
+        "role": "neutral",
+        "displayName": "Soft Chalk",
+        "canonical": "#c9d6cb"
+      },
+      "chalk-faint": {
+        "role": "neutral",
+        "displayName": "Faint Chalk",
+        "canonical": "#a3b9a7"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "End-zone stencil",
+        "purpose": "The league name only."
+      },
+      "headline": {
+        "displayName": "Section heading",
+        "purpose": "Condensed caps section openers."
+      },
+      "body": {
+        "displayName": "Reading sans",
+        "purpose": "Tables, lists and notes with tabular figures."
+      },
+      "label": {
+        "displayName": "Press-box label",
+        "purpose": "Table headers, award terms, the subline."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Entrances: tab panels (200ms, 6px rise), select changes (150ms fade), the first-load champion stagger (450ms, 50ms apart) and the hash rail chalked left to right (700ms, clip-path)."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "The flag bar sliding between tabs (250ms, transform only)."
+      },
+      {
+        "name": "press",
+        "value": "scale(.97) over 120ms",
+        "purpose": "Tab press feedback."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "480px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Tab rail",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Sticky condensed-caps tabs on a chalk baseline with a sliding flag bar.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"on\">Hall</button><button>Seasons</button><button>Record Book</button></nav>",
+      "css": ".ds-tabs { display: flex; gap: 28px; background: #1e4d2b; border-bottom: 2px solid #f4f4ee; padding: 0 16px; } .ds-tabs button { background: none; border: 0; padding: 14px 0 10px; color: #c9d6cb; font: 800 15px 'Saira Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; border-bottom: 4px solid transparent; cursor: pointer; } .ds-tabs button:hover { color: #f4f4ee; } .ds-tabs button.on { color: #f4f4ee; border-bottom-color: #e8c547; } .ds-tabs button:focus-visible { outline: 2px solid #e8c547; outline-offset: 2px; }"
+    },
+    {
+      "name": "Yard marker",
+      "kind": "custom",
+      "description": "A champion season as a yard marker between chalk lines.",
+      "html": "<div class=\"ds-marker\"><div class=\"yr\">2025</div><div class=\"who\">Henry</div><div class=\"tm\">The Downtown Champs</div></div>",
+      "css": ".ds-marker { width: 116px; padding: 18px 14px 16px; border-left: 2px solid #f4f4ee; border-right: 2px solid #f4f4ee; background: #1e4d2b; color: #f4f4ee; } .ds-marker .yr { font: 400 44px/1 'Saira Stencil One', sans-serif; } .ds-marker .who { margin-top: 8px; font: 800 17px 'Saira Condensed', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: #e8c547; } .ds-marker .tm { font: 13px/1.3 'Source Sans 3', sans-serif; color: #c9d6cb; }"
+    },
+    {
+      "name": "Flag",
+      "kind": "chip",
+      "refersTo": "flag",
+      "description": "The one key number in a block.",
+      "html": "<span class=\"ds-flag\">.744</span>",
+      "css": ".ds-flag { background: #e8c547; color: #0f2a18; font: 700 15px 'Source Sans 3', sans-serif; font-variant-numeric: tabular-nums; padding: 1px 5px; border-radius: 2px; }"
+    },
+    {
+      "name": "Select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Season and manager pickers.",
+      "html": "<select class=\"ds-select\"><option>2025</option><option>2024</option></select>",
+      "css": ".ds-select { appearance: none; background: #0f2a18; color: #f4f4ee; border: 2px solid #f4f4ee; border-radius: 2px; padding: 8px 36px 8px 12px; font: 800 16px 'Saira Condensed', sans-serif; letter-spacing: .1em; cursor: pointer; } .ds-select:focus-visible { outline: 2px solid #e8c547; outline-offset: 2px; }"
+    },
+    {
+      "name": "Record list",
+      "kind": "card",
+      "description": "Numbered records with stencil ranks, flagged #1 value, season and week pinned.",
+      "html": "<div class=\"ds-rec\"><h3>Highest scores</h3><ol><li><span class=\"n\">1</span><span class=\"v f\">199.94</span><span class=\"d\">Henry<small>2025 · Week 7</small></span></li><li><span class=\"n\">2</span><span class=\"v\">199.78</span><span class=\"d\">Ryan<small>2022 · Week 2</small></span></li></ol></div>",
+      "css": ".ds-rec { border-top: 2px solid #f4f4ee; padding-top: 14px; background: #1e4d2b; color: #f4f4ee; font: 15px/1.5 'Source Sans 3', sans-serif; } .ds-rec h3 { margin: 0 0 8px; font: 800 16px 'Saira Condensed', sans-serif; letter-spacing: .12em; text-transform: uppercase; } .ds-rec ol { list-style: none; margin: 0; padding: 0; } .ds-rec li { display: grid; grid-template-columns: 34px 92px 1fr; gap: 8px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid rgba(244,244,238,.22); } .ds-rec .n { font: 400 26px/1 'Saira Stencil One', sans-serif; color: #c9d6cb; } .ds-rec .v { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; } .ds-rec .v.f { justify-self: end; background: #e8c547; color: #0f2a18; padding: 0 5px; border-radius: 2px; } .ds-rec small { display: block; color: #c9d6cb; font-size: 13px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Chalked Gridiron",
+    "overview": "The site is a football field. A painted end zone carries the league name in stencil caps, and chalk yard lines rule every section, table and list. Champions stand as yard markers, one chalk line per season, so the field's length counts the league's age. Everything sits on flat turf. There is no texture, gradient, glow or card: the field is drawn only in paint and chalk.",
+    "keyCharacteristics": [
+      "Four flat inks: end-zone green, turf green, chalk and flag yellow.",
+      "Stencil display type for the league name, yard markers and rank numerals.",
+      "Chalk rules (2px) under headers and above blocks, faint chalk lines (1px) between rows.",
+      "One yellow flag per block.",
+      "Phone-first: wide tables scroll inside themselves with the name column pinned."
+    ],
+    "rules": [
+      {
+        "name": "The One Flag Rule",
+        "body": "Each table, record list or award block carries at most one yellow flag. When two things are flagged, neither is.",
+        "section": "colors"
+      },
+      {
+        "name": "The Four Inks Rule",
+        "body": "No color outside the four inks and their chalk tints. Wins and losses are told apart by chalk weight (bold chalk versus faint chalk), never by red and green.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Size Table Rule",
+        "body": "Inside a table every cell is the same size. Names are bold, losses are faint chalk, and the leader carries the flag. Nothing grows.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stencil Numeral Rule",
+        "body": "Ranks in record lists are stencil yard numbers (26px, soft chalk), never plain digits or \"01/02\".",
+        "section": "typography"
+      },
+      {
+        "name": "The Painted Field Rule",
+        "body": "Nothing floats above the field. If an element needs separation, give it a chalk rule, not a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do pin every record to its season and week (\"2024 · Week 14\") right next to the number.",
+      "Do mark the single key value of a block with the flag (#e8c547 on #0f2a18).",
+      "Do rule sections with chalk lines: 2px chalk under headers, 1px chalk lines between rows.",
+      "Do use stencil type for anything painted on the field: the league name, years and rank numerals.",
+      "Do theme browser surfaces: yellow selection, yellow focus rings and caret, and chalk-and-green scrollbars."
+    ],
+    "donts": [
+      "Don't add gradients, textures, glows or drop shadows. The field is flat paint.",
+      "Don't use red and green for wins and losses. Use bold chalk versus faint chalk.",
+      "Don't put a label or eyebrow above a heading. The heading carries itself.",
+      "Don't use emoji or Unicode glyphs as icons. The trophy is an authored SVG symbol.",
+      "Don't box content in cards. Blocks are separated by chalk rules on open turf."
+    ]
+  }
+}

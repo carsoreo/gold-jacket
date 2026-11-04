@@ -1,0 +1,7 @@
+node_modules/
+data/
+*.log
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/live/
+.impeccable/questions/
