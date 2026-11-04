@@ -330,7 +330,7 @@ function draft(year) {
 const draftManagers = (year) => {
   const s = D.seasons.find((x) => x.year == year); const keep = $('#dm').value;
   const names = [...new Set(s.draft.map((d) => d[3]).filter(Boolean))].toSorted((a, b) => a.localeCompare(b));
-  $('#dm').innerHTML = `<option value="">Whole board</option>${names.map((n) => `<option ${n === keep ? 'selected' : ''}>${esc(n)}</option>`).join('')}`;
+  $('#dm').innerHTML = `<option value="">Big Board</option>${names.map((n) => `<option ${n === keep ? 'selected' : ''}>${esc(n)}</option>`).join('')}`;
 };
 $('#drafts').innerHTML = `<div class="picker"><h2>Draft</h2><select id="dy" aria-label="Draft season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select><select id="dm" aria-label="Manager"></select></div><div id="draft"></div><p class="note">Scroll the board sideways for every pick.</p>`;
 const redraw = () => { draft($('#dy').value); enter($('#draft'), { y: 0, ms: 150 }); };

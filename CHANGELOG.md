@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.1.2 (2026-11-04)
+
+- The Drafts tab's dropdown says "Big Board" instead of "Whole board".
+
 ## 2.1.1 (2026-11-04)
 
 - Keepers worked out for a season Yahoo didn't mark (2023) follow the league's own pattern:
