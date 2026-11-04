@@ -1,6 +1,6 @@
 {
   "name": "league-hall-of-fame",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "A one-page Hall of Fame site for a fantasy football league, built from its Yahoo and Sleeper history.",
