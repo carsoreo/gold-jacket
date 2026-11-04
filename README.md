@@ -2,7 +2,7 @@
 
 [![test](https://github.com/carsoreo/league-hall-of-fame/actions/workflows/test.yml/badge.svg)](https://github.com/carsoreo/league-hall-of-fame/actions/workflows/test.yml)
 
-A one-page Hall of Fame for a fantasy football league, built from its Yahoo history. It covers champions, records, rivalries, drafts, player stats and trades, and it's styled as a chalked football field.
+A one-page Hall of Fame for a fantasy football league, built from its Yahoo and Sleeper history, including leagues that moved from one to the other. It covers champions, records, rivalries, drafts, player stats and trades, and it's styled as a chalked football field.
 
 Live example: https://theboysff.duckdns.org
 
@@ -22,24 +22,42 @@ The page is a single self-contained HTML file with no dependencies. See [DESIGN.
 
 ## Collecting your league's data
 
-Yahoo's Fantasy API is closed to new apps, so the data comes from your league's own Yahoo pages, read in a browser where you're signed in. Three collector scripts each save one file to `data/`:
+The site reads up to three kinds of data per platform, all saved in `data/`:
 
-| Script | Saves | Required | Time |
-|---|---|---|---|
-| [`yahoo-history-browser.js`](scripts/yahoo-history-browser.js) | `yahoo-history.json`: teams, manager nicknames, final standings, weekly scores, drafts and keepers | Yes | ~10 min |
-| [`yahoo-lineups-browser.js`](scripts/yahoo-lineups-browser.js) | `yahoo-lineups.json`: every team's weekly lineup with each player's slot and points | For the Players tab and draft grades | ~2 hours |
-| [`yahoo-trades-browser.js`](scripts/yahoo-trades-browser.js) | `yahoo-trades.json`: every trade, with players and draft picks | For the Trades tab | ~1 min |
+| Data | Used for | Required |
+|---|---|---|
+| History: teams, managers, final standings, weekly scores, drafts and keepers | Every tab | Yes |
+| Lineups: every team's weekly lineup, with each player's slot and points | The Players tab and draft grades | No |
+| Trades: every trade, with players and draft picks | The Trades tab | No |
 
-The scripts never collect email addresses.
+Everything in `data/` is gitignored, so league data never ends up in the repo. No email addresses are collected.
 
-### Running a script
+### Sleeper
+
+Sleeper's API is public, so one command collects everything:
+
+```bash
+npm run sleeper -- <league id>
+```
+
+Use the newest season's league ID, the number in `sleeper.com/leagues/<league id>`. The script follows each season back to the one before it and saves `sleeper-history.json`, `sleeper-lineups.json` and `sleeper-trades.json`. It takes under a minute, and you can rerun it any time during a season to pick up new weeks.
+
+### Yahoo
+
+Yahoo's Fantasy API is closed to new apps, so its data comes from your league's own Yahoo pages, read in a browser where you're signed in:
+
+| Script | Saves | Time |
+|---|---|---|
+| [`yahoo-history-browser.js`](scripts/yahoo-history-browser.js) | `yahoo-history.json` | ~10 min |
+| [`yahoo-lineups-browser.js`](scripts/yahoo-lineups-browser.js) | `yahoo-lineups.json` | ~2 hours |
+| [`yahoo-trades-browser.js`](scripts/yahoo-trades-browser.js) | `yahoo-trades.json` | ~1 min |
 
 1. Find each season's league number. On your Yahoo profile, open **Fantasy → History**, open each past season of the league, and note the number in its URL (`football.fantasysports.yahoo.com/2024/f1/64015` is league `64015` in 2024).
 2. Edit the `SEASONS` list at the top of the script. The lineups script also needs the number of weeks in each season.
 3. Open any page on `football.fantasysports.yahoo.com` while signed in, open the developer console (F12 → **Console**), and paste the script.
 4. When it's done, click the button it shows to copy the result, then paste it into the matching file in `data/`.
 
-### Options
+Options:
 
 - **Collect only what you need.** Only the history is required; the other tabs appear once their files are in `data/`.
 - **Collect fewer seasons.** Trim `SEASONS` to the years you want. You can collect more later and rerun.
@@ -49,15 +67,17 @@ The scripts never collect email addresses.
   - Lineups: `localStorage.removeItem('__lineups_2026')`, for one season.
 - **Expect pauses.** Yahoo blocks fast reading, so the scripts read one page every few seconds. When blocked, they wait it out and continue.
 
-### Optional: merging managers
+### Leagues that changed platforms
 
-If a manager's Yahoo nickname changed between seasons, map old names to current ones in `data/managers.json`:
+A league that moved, for example from Yahoo to Sleeper, keeps one history. Collect each platform's seasons as above and the site joins them into one record book, one set of rivalries and one draft history.
 
-```json
-{ "Jackson": "Jack" }
-```
-
-Everything in `data/` is gitignored, so league data never ends up in the repo.
+- **Each season comes from one platform.** A year uses Yahoo's copy if there is one, otherwise Sleeper's. A test Sleeper league for a season you also played on Yahoo is ignored.
+- **Match people across platforms.** Sleeper usernames rarely match Yahoo nicknames, so map each Sleeper name to the name you want shown in `data/managers.json`:
+  ```json
+  { "carsoreo": "Carson", "henrythegreat": "Henry" }
+  ```
+  The same file merges a Yahoo nickname that changed between seasons, for example `{ "Jackson": "Jack" }`. Anyone left unmapped shows up as a separate manager.
+- **Keepers.** Sleeper marks keepers itself, so Sleeper seasons use its marks as they are.
 
 ## Building
 
@@ -83,7 +103,7 @@ On the first build, the site downloads Sleeper's public player list and refreshe
   - *Value:* spot minus finish, so "claimed WR49, finished WR4" is +45.
   - A pick that never played counts as finishing last among the players claimed at his position.
 - **Draft grades** rank managers each season by the total value of their real picks, A through F.
-- **Keepers** come from Yahoo's keeper marks. For seasons Yahoo didn't mark, a pick is a keeper if the same manager or team ended the previous season with that player, or if it's in the usual keeper rounds and the player was on any roster.
+- **Keepers** come from Sleeper's and Yahoo's keeper marks. For Yahoo seasons with no marks, a pick is a keeper if the same manager or team ended the previous season with that player, or if it's in the usual keeper rounds and the player was on any roster.
 - **Trades** are judged by the points each side's new players scored in its starting lineup for the rest of that season. Draft picks are listed but not scored.
 - **Hidden points.** Yahoo sometimes hides a player's points behind a "Bye" label. When a starter is the only one hidden in a lineup, his points come from the team's score. Other hidden weeks are left out.
 

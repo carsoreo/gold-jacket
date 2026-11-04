@@ -92,8 +92,11 @@ function draftGrades(history, rows, top, posOf) {
   for (const s of history.seasons) {
     if (!s.complete || !s.draft.length) continue;
     const prev = finalRoster[s.year - 1];
-    const yahooMarked = s.draft.some((d) => d.keeper);
-    const kept = (d) => yahooMarked ? d.keeper : !!prev && (prev.has(`m|${d.manager}|${name(d.player)}`) || prev.has(`t|${d.team}|${name(d.player)}`)
+    // Sleeper always says which picks were keepers; so does Yahoo in the seasons it marked any.
+    const marksKept = s.keepersKnown || s.draft.some((d) => d.keeper);
+    // Team numbers only carry over within one platform, so the same-team rule is skipped after a migration.
+    const samePlatform = history.seasons.find((x) => x.year === s.year - 1)?.platform === s.platform;
+    const kept = (d) => marksKept ? d.keeper : !!prev && (prev.has(`m|${d.manager}|${name(d.player)}`) || (samePlatform && prev.has(`t|${d.team}|${name(d.player)}`))
       || (d.round >= keeperRound && prev.has(`a|${name(d.player)}`)));
     const all = s.draft.map((d, i) => ({ year: s.year, overall: i + 1, round: d.round, pick: d.pick, player: name(d.player), manager: d.manager, keeper: kept(d), points: round2(pts[`${s.year}|${name(d.player)}`] ?? 0) }));
     const picks = all.filter((p) => !p.keeper);

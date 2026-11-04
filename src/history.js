@@ -17,7 +17,7 @@ export function buildHistory(rawSeasons, aliases = {}) {
     if (!complete) games = games.filter((g) => g.week < Math.max(...games.map((x) => x.week)));
     const teams = Object.values(byId).toSorted((a, b) => a.rank - b.rank);
     return {
-      year: s.year, complete, playoffStart, teams, games,
+      year: s.year, platform: s.platform ?? 'yahoo', keepersKnown: !!s.keepersKnown, complete, playoffStart, teams, games,
       champion: complete ? teams.find((t) => t.rank === 1) : null,
       draft: (s.draft ?? []).map((d) => ({ ...d, manager: byId[d.team]?.manager, teamName: byId[d.team]?.name })),
     };

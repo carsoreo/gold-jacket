@@ -2,6 +2,12 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 1.1.0 (2026-11-04)
+
+- Sleeper leagues: `npm run sleeper -- <league id>` collects every season of a Sleeper league from Sleeper's public API, following each season back to the one before it. It covers history, weekly lineups and trades.
+- Leagues that changed platforms: Yahoo and Sleeper seasons join into one history. Each year comes from one platform, Yahoo's copy first, and `data/managers.json` matches people across platforms.
+- Sleeper's own keeper marks are used for its seasons. The same-team keeper rule no longer crosses a platform change.
+
 ## 1.0.0 (2026-11-03)
 
 The Hall of Fame site in its own repo. Before this it lived in [ff-discord-bot](https://github.com/carsoreo/ff-discord-bot), versions v1.3.0–v1.7.0, which built and served it. This release is the same site as that repo's v1.7.0.

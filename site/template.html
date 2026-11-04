@@ -164,7 +164,7 @@ const done = D.seasons.filter((s) => s.complete);
 const live = D.seasons.find((s) => !s.complete);
 document.title = `${D.league} Hall of Fame`;
 $('#title').textContent = D.league;
-$('#sub').innerHTML = `<b>Hall of Fame</b> · Est. ${D.seasons[0].year} · ${D.seasons.length} seasons · ${D.managers.length} managers`;
+$('#sub').innerHTML = `<b>Hall of Fame</b> · Est. ${D.seasons[0].year} · ${D.seasons.length} season${D.seasons.length === 1 ? '' : 's'} · ${D.managers.length} managers`;
 $('#foot').textContent = `Updated ${D.built} · Data from Yahoo`;
 
 // Tabs
