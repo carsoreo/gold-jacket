@@ -1,6 +1,6 @@
 // Paste into the DevTools console on a football.fantasysports.yahoo.com tab while signed in.
-// Reads each past season of your league and downloads yahoo-history.json (team names, manager nicknames,
-// standings, weekly scores, drafts; no emails). Move the file to data/ and run `npm run site`.
+// Reads each season of your league (team names, manager nicknames, standings, weekly scores, drafts and keepers;
+// no emails), then shows a button that copies the result. Save it as data/yahoo-history.json and run `npm run site`.
 // Find each season's league number on your Yahoo profile: profiles.sports.yahoo.com → Fantasy → History.
 // Yahoo throttles fast reading (error 999), so it waits 3s per page and backs off when blocked;
 // finished seasons are kept in localStorage, so a rerun picks up where it stopped.
@@ -74,7 +74,9 @@ const SEASONS = [[2020, 20528], [2021, 23769], [2022, 137985], [2023, 353218], [
     done.push(s);
     localStorage.setItem('__hist', JSON.stringify(done));
   }
-  const a = Object.assign(document.createElement('a'), { download: 'yahoo-history.json', href: URL.createObjectURL(new Blob([JSON.stringify(done)], { type: 'application/json' })) });
-  document.body.append(a); a.click();
-  console.log('Downloaded yahoo-history.json. Clear the saved progress with: localStorage.removeItem("__hist")');
+  const b = Object.assign(document.createElement('button'), { textContent: 'Copy history (yahoo-history.json)' });
+  b.style.cssText = 'position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:999999;padding:16px 24px;font:700 18px sans-serif';
+  b.onclick = async () => { await navigator.clipboard.writeText(JSON.stringify(done)); b.textContent = 'Copied'; };
+  document.body.append(b);
+  console.log('Done. Click the button, then paste into data/yahoo-history.json. Clear the saved progress with: localStorage.removeItem("__hist")');
 })();
