@@ -2,6 +2,14 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.1.1 (2026-11-04)
+
+- Keepers worked out for a season Yahoo didn't mark (2023) follow the league's own pattern:
+  - Only late-round picks qualify: rounds where at least 10% of picks were keepers in the marked seasons.
+  - Each team gets at most the usual number of keepers, latest picks first.
+  - Before, re-drafting your own player early counted as keeping him (Henry's round-2 Justin Fields and Keenan Allen in 2023).
+- A league with no marked keeper seasons gets no guessed keepers.
+
 ## 2.1.0 (2026-11-04)
 
 - New draft grades. Each pick is compared with what picks at that spot at that position usually score in the league. The expected points come from a curve fitted so it never rises later in the draft. A draft's grade is those differences added up, measured against every draft in league history, with no forced curve (an A is one standard deviation above the average draft). Best drafters use the same points.

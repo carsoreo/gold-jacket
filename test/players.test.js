@@ -38,11 +38,20 @@ test("keepers are left out of draft value: Yahoo's marks where it has them", () 
   assert.ok(!d.steals.some((p) => p.player === 'Sleeper'));
 });
 
-test('unmarked seasons infer keepers from last season’s final rosters', () => {
-  const prev = { ...season, year: 2023, draft: [] };
-  const lu = { ...lineups, 2023: [{ w: 3, t: 2, p: [[4, 'Filler', 'BN', 0]] }] }; // Bob's team ended 2023 holding Filler
-  const d = playerStats(buildHistory([prev, season]), lu).drafts.bySeason[2024];
+test('unmarked seasons infer keepers only in the keeper rounds, at most the usual number per team', () => {
+  // 2023 is marked: one keeper per team, both in round 2. 2024 is unmarked.
+  const marked = { ...season, year: 2023, draft: season.draft.map((d) => ({ ...d, player: `${d.player} 23`, keeper: d.round === 2 })) };
+  const lu = { ...lineups, 2023: [{ w: 3, t: 1, p: [[1, 'Bust', 'RB', 0]] }, { w: 3, t: 2, p: [[4, 'Filler', 'BN', 0], [2, 'Star', 'QB', 0]] }] };
+  const d = playerStats(buildHistory([marked, season]), lu).drafts.bySeason[2024];
+  // Bob ended 2023 with Star and Filler. Star went in round 1 (a re-draft, not a keeper); Filler in round 2 is kept.
+  // Ann ended 2023 with Bust, a round-1 pick, so she keeps nobody.
   assert.deepEqual(d.keepers, [4]);
+});
+
+test('a league with no marked keeper seasons gets no guessed keepers', () => {
+  const prev = { ...season, year: 2023, draft: [] };
+  const lu = { ...lineups, 2023: [{ w: 3, t: 2, p: [[4, 'Filler', 'BN', 0]] }] };
+  assert.deepEqual(playerStats(buildHistory([prev, season]), lu).drafts.bySeason[2024].keepers, []);
 });
 
 test("Yahoo's keeper icon glyph in a drafted name still matches the lineups", () => {

@@ -77,8 +77,10 @@ function positionOf(rows, positions) {
 
 // Draft value: points the player scored that season on any roster (bench included), so a pick traded away still counts.
 // Keepers aren't real picks, so they're left out. Where Yahoo marked keepers, its marks are used. For a season it
-// didn't mark (2023), a pick is a keeper if the same manager or team ended the season before with that player, or
-// if it falls in the keeper rounds (where most marked keepers sit) and the player was on any roster at the end.
+// didn't mark (2023), keepers are inferred from how the marked seasons look: only picks in the late rounds where
+// keepers sit (at least 10% of those rounds' picks were keepers) qualify, when the same manager or team ended the
+// season before with the player, or, in the main keeper rounds, anyone did. Each team gets at most the usual number
+// of keepers, latest picks first, so re-drafting your own player in round 2 isn't mistaken for keeping him.
 // Value is judged within a position. Draft spot: keepers count as claimed before the draft, so a pick's spot is the
 // number of kept players at his position plus his order among real picks. Finish: his rank by points among every
 // player at that position that season (kept, drafted or picked up), capped at the number of players claimed there.
@@ -94,7 +96,12 @@ function draftGrades(history, rows, top, posOf) {
   }
   const marked = history.seasons.filter((s) => s.draft.some((d) => d.keeper));
   const share = (r) => { const p = marked.flatMap((s) => s.draft.filter((d) => d.round === r)); return p.length ? p.filter((d) => d.keeper).length / p.length : 0; };
-  const keeperRound = Math.min(...[...new Set(marked.flatMap((s) => s.draft.map((d) => d.round)))].filter((r) => share(r) >= 0.5), Infinity);
+  const rounds = [...new Set(marked.flatMap((s) => s.draft.map((d) => d.round)))];
+  const keeperRound = Math.min(...rounds.filter((r) => share(r) >= 0.5), Infinity);
+  const lateRound = Math.min(...rounds.filter((r) => share(r) >= 0.1), Infinity);
+  // The usual keepers per team: the most common count in the marked seasons.
+  const counts = marked.flatMap((s) => Object.values(Object.groupBy(s.draft.filter((d) => d.keeper), (d) => d.team)).map((g) => g.length));
+  const perTeam = counts.length ? Number(Object.entries(Object.groupBy(counts, (c) => c)).toSorted((a, b) => b[1].length - a[1].length)[0][0]) : 0;
   const bySeason = {};
   for (const s of history.seasons) {
     if (!s.complete || !s.draft.length) continue;
@@ -103,9 +110,15 @@ function draftGrades(history, rows, top, posOf) {
     const marksKept = s.keepersKnown || s.draft.some((d) => d.keeper);
     // Team numbers only carry over within one platform, so the same-team rule is skipped after a migration.
     const samePlatform = history.seasons.find((x) => x.year === s.year - 1)?.platform === s.platform;
-    const kept = (d) => marksKept ? d.keeper : !!prev && (prev.has(`m|${d.manager}|${name(d.player)}`) || (samePlatform && prev.has(`t|${d.team}|${name(d.player)}`))
+    const candidate = (d) => !!prev && d.round >= lateRound && (prev.has(`m|${d.manager}|${name(d.player)}`) || (samePlatform && prev.has(`t|${d.team}|${name(d.player)}`))
       || (d.round >= keeperRound && prev.has(`a|${name(d.player)}`)));
-    const all = s.draft.map((d, i) => ({ year: s.year, overall: i + 1, round: d.round, pick: d.pick, player: name(d.player), manager: d.manager, keeper: kept(d), points: round2(pts[`${s.year}|${name(d.player)}`] ?? 0) }));
+    const inferred = new Set();
+    if (!marksKept) {
+      for (const g of Object.values(Object.groupBy(s.draft.map((d, i) => ({ d, i })).filter(({ d }) => candidate(d)), ({ d }) => d.team))) {
+        for (const { i } of g.toSorted((a, b) => b.i - a.i).slice(0, perTeam || g.length)) inferred.add(i);
+      }
+    }
+    const all = s.draft.map((d, i) => ({ year: s.year, overall: i + 1, round: d.round, pick: d.pick, player: name(d.player), manager: d.manager, keeper: marksKept ? !!d.keeper : inferred.has(i), points: round2(pts[`${s.year}|${name(d.player)}`] ?? 0) }));
     const picks = all.filter((p) => !p.keeper);
     for (const p of all) p.pos = posOf(p.player);
     // Finish ranks among everyone who played that position this season.
