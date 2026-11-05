@@ -2,6 +2,13 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.1.3 (2026-11-05)
+
+- A link to a tab (like `#drafts`) opens at the top of the page instead of jumping past the header.
+- On phones the chosen tab slides to the middle of the tab rail, and switching tabs keeps the rail where it is instead of scrolling back to the top.
+- Tabs no longer shrink when pressed, which made them pop while swiping the rail.
+- Swiping a table or the champions strip sideways no longer triggers Back or stretches the page. Taps no longer flash a grey box.
+
 ## 2.1.2 (2026-11-04)
 
 - The Drafts tab's dropdown says "Big Board" instead of "Whole board".

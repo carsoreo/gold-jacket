@@ -35,8 +35,11 @@
   nav { position: sticky; top: 0; z-index: 5; background: var(--turf); border-bottom: 2px solid var(--chalk); }
   nav .in { position: relative; display: flex; gap: clamp(14px, 4vw, 36px); padding: 0 var(--gutter); overflow-x: auto; scrollbar-width: none; padding-inline: var(--edge); }
   nav button { flex: none; background: none; border: 0; padding: 14px 0 12px; color: var(--chalk-2); font: 800 15px var(--label); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; }
-  nav button { transition: color .15s ease, transform .12s var(--ease-out); }
-  nav button:active { transform: scale(.97); }
+  nav button { transition: color .15s ease; }
+  /* No grey tap boxes on phones; keyboard focus still shows */
+  button, select { -webkit-tap-highlight-color: transparent; }
+  /* Sideways swipes stay in the strip instead of going Back or rubber-banding the page */
+  nav .in, .markers, .wrap { overscroll-behavior-x: contain; }
   @media (hover: hover) and (pointer: fine) { nav button:hover { color: var(--chalk); } }
   nav button[aria-selected="true"] { color: var(--chalk); }
   /* 1px bar scaled to the tab's width, so the slide is transform-only */
@@ -132,20 +135,20 @@
   .draft th[scope="row"] { font: 400 20px var(--stencil); color: var(--chalk-3); border-bottom: 1px solid var(--line); }
 
   footer { border-top: 6px solid var(--chalk); background: var(--endzone); padding: 20px var(--gutter); font: 600 13px var(--label); letter-spacing: .14em; text-transform: uppercase; color: var(--chalk-2); text-align: center; }
-  @media (prefers-reduced-motion: reduce) { nav .bar { transition: none; } nav button:active { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { nav .bar { transition: none; } }
 </style>
 </head>
 <body>
 <header class="endzone"><h1 id="title">The Boys</h1><p id="sub"></p></header>
 <nav aria-label="Sections"><div class="in" role="tablist" id="tabs"><span class="bar" id="bar"></span></div></nav>
 <main>
-  <section id="hall"></section>
-  <section id="seasons" hidden></section>
-  <section id="records" hidden></section>
-  <section id="players" hidden></section>
-  <section id="trades" hidden></section>
-  <section id="rivals" hidden></section>
-  <section id="drafts" hidden></section>
+  <section id="p-hall"></section>
+  <section id="p-seasons" hidden></section>
+  <section id="p-records" hidden></section>
+  <section id="p-players" hidden></section>
+  <section id="p-trades" hidden></section>
+  <section id="p-rivals" hidden></section>
+  <section id="p-drafts" hidden></section>
 </main>
 <footer id="foot"></footer>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="cup" viewBox="0 0 16 16"><path fill="currentColor" d="M4 1h8v1h3v2.5A3.5 3.5 0 0 1 11.7 8 4 4 0 0 1 9 10v2h2.5v2h-7v-2H7v-2a4 4 0 0 1-2.7-2A3.5 3.5 0 0 1 1 4.5V2h3V1zm0 2.5H2.5v1A2 2 0 0 0 4 6.4V3.5zm8 0v2.9a2 2 0 0 0 1.5-1.9v-1H12z"/></symbol></svg>
@@ -171,7 +174,7 @@ $('#foot').textContent = `Updated ${D.built} · Data from ${D.platforms.join(' a
 
 // Tabs
 const tabs = [['hall', 'Hall'], ['seasons', 'Seasons'], ['records', 'Record Book'], ...(D.players ? [['players', 'Players']] : []), ...(D.trades ? [['trades', 'Trades']] : []), ['rivals', 'Rivalries'], ['drafts', 'Drafts']];
-$('#tabs').insertAdjacentHTML('beforeend', tabs.map(([id, n]) => `<button role="tab" id="t-${id}" aria-controls="${id}" data-t="${id}">${n}</button>`).join(''));
+$('#tabs').insertAdjacentHTML('beforeend', tabs.map(([id, n]) => `<button role="tab" id="t-${id}" aria-controls="p-${id}" data-t="${id}">${n}</button>`).join(''));
 // Motion: content is visible by default; these only ease it in. Reduced motion keeps the fades, drops the movement.
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
@@ -182,17 +185,22 @@ function enter(el, { y = 6, ms = 200, delay = 0, scale } = {}) {
 }
 
 function show(id, animate = true) {
-  for (const [t] of tabs) { $(`#${t}`).hidden = t !== id; $(`#t-${t}`).setAttribute('aria-selected', t === id); }
-  const b = $(`#t-${id}`); $('#bar').style.transform = `translateX(${b.offsetLeft}px) scaleX(${b.offsetWidth})`;
+  for (const [t] of tabs) { $(`#p-${t}`).hidden = t !== id; $(`#t-${t}`).setAttribute('aria-selected', t === id); }
+  const b = placeBar(id), rail = $('#tabs');
+  // On a phone the rail scrolls sideways: bring the chosen tab to the middle.
+  rail.scrollTo({ left: b.offsetLeft - (rail.clientWidth - b.offsetWidth) / 2, behavior: animate && !calm.matches ? 'smooth' : 'auto' });
   history.replaceState(null, '', '#' + id);
-  if (animate) enter($(`#${id}`));
+  if (animate) enter($(`#p-${id}`));
 }
-$('#tabs').onclick = (e) => { const b = e.target.closest('button'); if (b && b.getAttribute('aria-selected') !== 'true') { show(b.dataset.t); window.scrollTo({ top: 0 }); } };
-addEventListener('resize', () => show(location.hash.slice(1) || 'hall', false));
+function placeBar(id) { const b = $(`#t-${id}`); $('#bar').style.transform = `translateX(${b.offsetLeft}px) scaleX(${b.offsetWidth})`; return b; }
+// Keep the tab rail pinned where it is instead of jumping back up past the header.
+$('#tabs').onclick = (e) => { const b = e.target.closest('button'); if (b && b.getAttribute('aria-selected') !== 'true') { show(b.dataset.t); scrollTo(0, Math.min(scrollY, $('header').offsetHeight)); } };
+// Phones fire resize as the address bar hides; only the bar needs to follow.
+addEventListener('resize', () => placeBar(location.hash.slice(1) || 'hall'));
 
 // Hall
 const leader = D.managers.reduce((a, b) => (b.winPct > a.winPct ? b : a));
-$('#hall').innerHTML = `<h2>Champions</h2>
+$('#p-hall').innerHTML = `<h2>Champions</h2>
 <div class="markers">${[...(live ? [live] : []), ...done.toReversed()].map((s) => {
   if (!s.complete) return `<div class="marker live"><div class="yr">${s.year}</div><div class="who">Live</div><div class="tm">Season in progress</div></div>`;
   const t = s.teams.find((x) => x.rank === 1);
@@ -220,13 +228,13 @@ function season(year) {
   table([[s.complete ? 'Finish' : 'Rank'], ['Team'], ['Manager'], ['Record', 'r'], ['PF', 'r'], ['PA', 'r']],
     s.teams.map((t) => `<tr><td>${s.complete ? (t.rank === 1 ? `<span class="flag">${ord(t.rank)}</span>` : ord(t.rank)) : t.rank}</td><td>${esc(t.name)}</td><td class="name">${esc(t.manager)}</td><td class="r">${rec(t.wins, t.losses, t.ties)}</td><td class="r">${pts(t.pf)}</td><td class="r">${pts(t.pa)}</td></tr>`));
 }
-$('#seasons').innerHTML = `<div class="picker"><h2>Season</h2><select id="yr" aria-label="Season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select></div><div id="season"></div>`;
+$('#p-seasons').innerHTML = `<div class="picker"><h2>Season</h2><select id="yr" aria-label="Season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select></div><div id="season"></div>`;
 $('#yr').onchange = (e) => { season(e.target.value); enter($('#season'), { y: 0, ms: 150 }); }; season($('#yr').value);
 
 // Record book
 const R = D.records;
 const list = (title, rows, note) => `<div class="rec"><h3>${title}</h3>${note ? `<p class="note">${note}</p>` : ''}<ol>${rows.map(([v, d, s], i) => `<li><span class="n">${i + 1}</span><span class="v">${v}</span><span class="d">${d}<small>${s}</small></span></li>`).join('')}</ol></div>`;
-$('#records').innerHTML = `<h2>Record book</h2><p class="note">Every week since ${D.seasons[0].year}, playoffs included. This week's games count once they're final.</p><div class="board">
+$('#p-records').innerHTML = `<h2>Record book</h2><p class="note">Every week since ${D.seasons[0].year}, playoffs included. This week's games count once they're final.</p><div class="board">
   ${list('Highest scores', R.highScores.map((r) => [pts(r.points), esc(r.manager), when(r)]))}
   ${list('Lowest scores', R.lowScores.map((r) => [pts(r.points), esc(r.manager), when(r)]))}
   ${list('Highest-scoring games', R.shootouts.map((r) => [pts(r.total), `${esc(r.winner)} ${pts(r.wPts)}, ${esc(r.loser)} ${pts(r.lPts)}`, when(r)]), 'Both teams’ points added together.')}
@@ -244,7 +252,7 @@ if (P) {
   const climb = (r) => `claimed ${r.pos}${r.posSlot}, ${r.posRank ? `finished ${r.pos}${r.posRank}` : 'never played'} · ${pts(r.points)} pts`;
   const signed = (n) => (n > 0 ? '+' : '') + n;
   const steal = P.drafts.steals[0];
-  $('#players').innerHTML = `${steal ? `<h2>Biggest steal ever</h2><div class="callout"><span class="big">${signed(steal.surplus)}</span><div><b>${esc(steal.player)}</b> <span class="dim">by ${esc(steal.manager)}, ${steal.year}</span><small>${climb(steal)}</small></div></div>` : ''}<h2>Players</h2><p class="note">From every team's weekly lineup since ${D.seasons[0].year}. Points count for the team that had the player that week. In a few weeks Yahoo hides several players' points, so those games are left out.</p><div class="board">
+  $('#p-players').innerHTML = `${steal ? `<h2>Biggest steal ever</h2><div class="callout"><span class="big">${signed(steal.surplus)}</span><div><b>${esc(steal.player)}</b> <span class="dim">by ${esc(steal.manager)}, ${steal.year}</span><small>${climb(steal)}</small></div></div>` : ''}<h2>Players</h2><p class="note">From every team's weekly lineup since ${D.seasons[0].year}. Points count for the team that had the player that week. In a few weeks Yahoo hides several players' points, so those games are left out.</p><div class="board">
     ${list('Best player games', P.bestGames.map((r) => [pts(r.points), `${esc(r.name)} <span class="dim">for ${esc(r.manager)}</span>`, when(r)]), 'Starters only.')}
     ${list('Most points left on the bench', P.benchWeeks.map((r) => [pts(r.points), esc(r.manager), `${r.year} · Week ${r.week} · ${esc(r.best.name)} had ${pts(r.best.points)}`]), 'One team, one week.')}
     ${list('Best draft picks', P.drafts.steals.map((r) => [signed(r.surplus), `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `${r.year} · ${climb(r)}`]), 'Spots climbed at his position, from where he was claimed (keepers go first) to where he finished among everyone at that position.')}
@@ -261,7 +269,7 @@ const T = D.trades;
 if (T) {
   const got = (x) => [...x.players.map((p) => `${esc(p.name)}${p.points ? ` <span class="dim">${pts(p.points)}</span>` : ''}`), ...x.picks.map((k) => `<span class="dim">${esc(k)}</span>`)].join(', ') || '<span class="dim">nothing listed</span>';
   const tradeRow = (t) => `<tr><td>${t.date}</td>${t.sides.map((x, i) => `<td class="name">${t.winner === i ? `<span class="flag">${esc(x.manager)}</span>` : esc(x.manager)}</td><td style="white-space:normal">${got(x)}</td>`).join('')}</tr>`;
-  $('#trades').innerHTML = `<h2>Trades</h2><p class="note">Every trade since ${D.seasons[0].year}. A trade's winner (flagged) is the side whose new players scored more in its starting lineup for the rest of that season. Draft picks are listed but not scored.</p>
+  $('#p-trades').innerHTML = `<h2>Trades</h2><p class="note">Every trade since ${D.seasons[0].year}. A trade's winner (flagged) is the side whose new players scored more in its starting lineup for the rest of that season. Draft picks are listed but not scored.</p>
   ${list('Most lopsided trades', T.lopsided.map((t) => { const w = t.sides[t.winner], l = t.sides[1 - t.winner]; return [pts(t.margin), `${esc(w.manager)} over ${esc(l.manager)}`, `${t.year} · ${w.players.map((p) => esc(p.name)).join(', ')} for ${l.players.map((p) => esc(p.name)).join(', ')}`]; }), 'Points gained over the other side.')}
   <h2>Trade records</h2><p class="note">Record in trades where both sides got players, and net points gained from them.</p>
   ${table([['Manager'], ['Trades', 'r'], ['Record', 'r'], ['Net pts', 'r']], T.managers.map((m, i) => `<tr><td class="name">${esc(m.manager)}</td><td class="r">${m.trades}</td><td class="r">${rec(m.wins, m.losses)}</td><td class="r">${i === 0 ? `<span class="flag">${(m.net > 0 ? '+' : '') + pts(m.net)}</span>` : (m.net > 0 ? '+' : '') + pts(m.net)}</td></tr>`))}
@@ -275,7 +283,7 @@ if (T) {
 // Rivalries
 const names = D.managers.map((m) => m.manager).toSorted((a, b) => a.localeCompare(b));
 const opts = (sel) => names.map((n) => `<option ${n === sel ? 'selected' : ''}>${esc(n)}</option>`).join('');
-$('#rivals').innerHTML = `<h2>Head to head</h2><div class="vs"><select id="ra" aria-label="First manager">${opts(names[0])}</select><span>VS</span><select id="rb" aria-label="Second manager">${opts(names[1])}</select></div><div id="rv"></div>
+$('#p-rivals').innerHTML = `<h2>Head to head</h2><div class="vs"><select id="ra" aria-label="First manager">${opts(names[0])}</select><span>VS</span><select id="rb" aria-label="Second manager">${opts(names[1])}</select></div><div id="rv"></div>
 <h2>Every matchup</h2><p class="note">Row manager's record against the column manager, playoffs included. Tap a record to see the games.</p>
 ${table([['', ''], ...names.map((n) => [esc(n), ''])], names.map((a) => `<tr><th scope="row">${esc(a)}</th>${names.map((b) => {
   const r = D.rivalries[`${a}|${b}`];
@@ -294,7 +302,7 @@ function rivalry() {
 }
 const pick = () => { rivalry(); enter($('#rv .score'), { y: 0, ms: 200, scale: 0.96 }); enter($('#rv .wrap'), { y: 0, ms: 150, delay: 60 }); };
 $('#ra').onchange = $('#rb').onchange = pick; rivalry();
-$('#rivals').addEventListener('click', (e) => { const c = e.target.closest('.matrix button'); if (c) { $('#ra').value = c.dataset.a; $('#rb').value = c.dataset.b; pick(); $('#ra').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
+$('#p-rivals').addEventListener('click', (e) => { const c = e.target.closest('.matrix button'); if (c) { $('#ra').value = c.dataset.a; $('#rb').value = c.dataset.b; pick(); $('#ra').scrollIntoView({ behavior: 'smooth', block: 'center' }); } });
 
 // Drafts
 const signedPts = (n) => (n > 0 ? '+' : '') + pts(n);
@@ -332,11 +340,11 @@ const draftManagers = (year) => {
   const names = [...new Set(s.draft.map((d) => d[3]).filter(Boolean))].toSorted((a, b) => a.localeCompare(b));
   $('#dm').innerHTML = `<option value="">Big Board</option>${names.map((n) => `<option ${n === keep ? 'selected' : ''}>${esc(n)}</option>`).join('')}`;
 };
-$('#drafts').innerHTML = `<div class="picker"><h2>Draft</h2><select id="dy" aria-label="Draft season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select><select id="dm" aria-label="Manager"></select></div><div id="draft"></div><p class="note">Scroll the board sideways for every pick.</p>`;
+$('#p-drafts').innerHTML = `<div class="picker"><h2>Draft</h2><select id="dy" aria-label="Draft season">${D.seasons.toReversed().map((s) => `<option>${s.year}</option>`).join('')}</select><select id="dm" aria-label="Manager"></select></div><div id="draft"></div><p class="note">Scroll the board sideways for every pick.</p>`;
 const redraw = () => { draft($('#dy').value); enter($('#draft'), { y: 0, ms: 150 }); };
 $('#dy').onchange = () => { draftManagers($('#dy').value); redraw(); };
 $('#dm').onchange = redraw;
-$('#drafts').addEventListener('click', (e) => { const b = e.target.closest('button.link'); if (b) { $('#dm').value = b.dataset.who; redraw(); } });
+$('#p-drafts').addEventListener('click', (e) => { const b = e.target.closest('button.link'); if (b) { $('#dm').value = b.dataset.who; redraw(); } });
 draftManagers($('#dy').value); draft($('#dy').value);
 
 const start = tabs.some(([id]) => id === location.hash.slice(1)) ? location.hash.slice(1) : 'hall';
