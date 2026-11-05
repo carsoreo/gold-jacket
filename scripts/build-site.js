@@ -19,6 +19,14 @@ const out = process.env.SITE_OUT ?? 'data/site';
 const config = read('data/league.json', {});
 const seasons = chooseSeasons({ yahoo: read('data/yahoo-history.json', []), sleeper: read('data/sleeper-history.json', []) }, config);
 if (!seasons.length) throw new Error('No league data: add data/yahoo-history.json or run `npm run sleeper -- <league id>`');
+// data/keepers.json fixes keepers the platform didn't mark: { "2024": ["Sam LaPorta"] }.
+for (const [year, kept] of Object.entries(read('data/keepers.json', {}))) {
+  const s = seasons.find((x) => x.year == year);
+  for (const name of kept) {
+    const d = s?.draft.find((x) => nameOnly(x.player) === nameOnly(name));
+    if (d) d.keeper = true; else console.warn(`keepers.json: no ${year} pick named ${name}`);
+  }
+}
 const both = (name) => ({ yahoo: read(`data/yahoo-${name}.json`, {}), sleeper: read(`data/sleeper-${name}.json`, {}) });
 const h = buildHistory(seasons, read('data/managers.json', {}));
 const lineups = pickByYear(seasons, both('lineups'));

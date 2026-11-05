@@ -114,6 +114,7 @@ Anyone left out shows up as a separate manager. The same file also merges a nick
 | `data/league.json` | `yahoo`, `sleeper` | Years each platform covers, as above |
 | `data/league.json` | `prefer` | Platform that wins a year both have |
 | `data/managers.json` | | Merges names across platforms and seasons |
+| `data/keepers.json` | | Keepers the platform didn't mark, by year: `{ "2024": ["Sam LaPorta"] }` |
 | Environment | `SITE_OUT` | Folder to write the page to (default `data/site`) |
 | Environment | `LEAGUE_NAME` | League name, overriding `league.json` |
 

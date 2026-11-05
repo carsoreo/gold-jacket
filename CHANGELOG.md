@@ -2,6 +2,10 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.2.0 (2026-11-05)
+
+- `data/keepers.json` marks keepers the platform missed, by year. Yahoo left the keeper icon off Luke's Sam LaPorta in 2024.
+
 ## 2.1.3 (2026-11-05)
 
 - A link to a tab (like `#drafts`) opens at the top of the page instead of jumping past the header.
