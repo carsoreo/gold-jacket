@@ -5,6 +5,16 @@ const SEASONS = [[2020, 20528], [2021, 23769], [2022, 137985], [2023, 353218], [
 
 (async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Yahoo throttles fast reading (error 999): wait and retry, so a throttled page never reads as "no trades".
+  const page = async (u) => {
+    for (let i = 0; ; i++) {
+      await sleep(2500);
+      const r = await fetch(u, { credentials: 'include' }).catch(() => null);
+      if (r?.ok) return new DOMParser().parseFromString(await r.text(), 'text/html');
+      if (i > 40) throw new Error(`gave up on ${u}`);
+      await sleep(i < 3 ? 120000 : 300000);
+    }
+  };
   const clean = (s) => (s ?? '').replace(/[\uE000-\uF8FF]/g, '').replace(/\s+/g, ' ').trim(); // Yahoo icon glyphs live in the private-use range
   // One row per side of a trade; a row with 4 cells starts a new trade.
   const parse = (d) => {
@@ -28,9 +38,7 @@ const SEASONS = [[2020, 20528], [2021, 23769], [2022, 137985], [2023, 353218], [
   for (const [year, lid] of SEASONS) {
     out[year] = [];
     for (let off = 0; ; off += 25) { // 25 trades per page; `count` is the offset
-      await sleep(2500);
-      const r = await fetch(`/${year}/f1/${lid}/transactions?transactionsfilter=trade${off ? `&count=${off}` : ''}`, { credentials: 'include' });
-      const t = parse(new DOMParser().parseFromString(await r.text(), 'text/html'));
+      const t = parse(await page(`/${year}/f1/${lid}/transactions?transactionsfilter=trade${off ? `&count=${off}` : ''}`));
       out[year].push(...t);
       if (t.length < 25) break;
     }

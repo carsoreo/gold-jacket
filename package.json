@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "A one-page Hall of Fame site for a fantasy football league, built from its Yahoo and Sleeper history.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test",
     "site": "node scripts/build-site.js",

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildHistory } from '../src/history.js';
 import { playerStats } from '../src/players.js';
+import { applyKeeperFixes } from '../src/sources.js';
 
 const team = (id, manager, rank) => ({ id, name: `${manager} FC`, manager, rank, wins: 1, losses: 1, ties: 0, pf: 200, pa: 200 });
 const season = {
@@ -46,6 +47,15 @@ test('unmarked seasons infer keepers only in the keeper rounds, at most the usua
   // Bob ended 2023 with Star and Filler. Star went in round 1 (a re-draft, not a keeper); Filler in round 2 is kept.
   // Ann ended 2023 with Bust, a round-1 pick, so she keeps nobody.
   assert.deepEqual(d.keepers, [4]);
+});
+
+test('listing every keeper for an unmarked season replaces the guessed ones', () => {
+  const marked = { ...season, year: 2023, draft: season.draft.map((d) => ({ ...d, player: `${d.player} 23`, keeper: d.round === 2 })) };
+  const lu = { ...lineups, 2023: [{ w: 3, t: 2, p: [[4, 'Filler', 'BN', 0]] }] };
+  const unmarked = structuredClone(season);
+  assert.deepEqual(applyKeeperFixes([unmarked], { 2024: ['Sleeper'] }), []);
+  // Without the fix Filler (Bob's round 2) is guessed as kept; with it only Sleeper is, and nobody else is guessed.
+  assert.deepEqual(playerStats(buildHistory([marked, unmarked]), lu).drafts.bySeason[2024].keepers, [3]);
 });
 
 test('a league with no marked keeper seasons gets no guessed keepers', () => {

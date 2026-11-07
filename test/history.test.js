@@ -43,3 +43,19 @@ test('an unfinished season keeps the weeks the collector marked final', () => {
   const unknown = { ...seasons[1] };
   assert.deepEqual(buildHistory([unknown]).seasons[0].games.map((g) => g.week), []); // latest week left out
 });
+
+test('streaks carry across seasons, skip playoff games, and the latest one is still active', () => {
+  const two = [
+    { year: 2024, playoffStart: 3, teams: [team(1, 'Ann', 2, 1, 1, 190, 195), team(2, 'Bob', 1, 1, 1, 195, 190)],
+      weeks: [{ week: 1, games: [g(1, 90, 2, 100)] }, { week: 2, games: [g(1, 100, 2, 95)] }, { week: 3, games: [g(1, 80, 2, 120)] }] },
+    { year: 2025, playoffStart: 3, teams: [team(1, 'Ann', 1, 2, 0, 215, 200), team(2, 'Bob', 2, 0, 2, 200, 215)],
+      weeks: [{ week: 1, games: [g(1, 110, 2, 100)] }, { week: 2, games: [g(1, 105, 2, 100)] }, { week: 3, games: [g(1, 90, 2, 90)] }] },
+  ];
+  const h = buildHistory(two);
+  assert.deepEqual(h.records.winStreaks[0], { manager: 'Ann', length: 3, from: '2024 W2', to: '2025 W2', active: true });
+  assert.deepEqual([h.records.loseStreaks[0].manager, h.records.loseStreaks[0].length], ['Bob', 3]);
+  // A tie is nobody's win: it counts as a tie head to head and isn't the "closest game".
+  const r = headToHead(h, 'Ann', 'Bob');
+  assert.deepEqual([r.wins, r.losses, r.ties], [3, 2, 1]);
+  assert.equal(h.records.closest[0].margin, 5);
+});

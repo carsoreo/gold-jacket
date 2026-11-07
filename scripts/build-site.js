@@ -1,7 +1,7 @@
 // Builds the Hall of Fame page from the league data in data/:
 //   yahoo-history.json and/or sleeper-history.json (at least one), plus the matching -lineups.json (player stats)
 //   and -trades.json (trades), managers.json (optional { "other name": "name to show" } aliases) and league.json
-//   (optional: name, yahoo/sleeper { from, through }, sleeper.league, prefer).
+//   (optional: name, yahoo/sleeper { from, through }, sleeper.league, prefer), keepers.json (optional keeper fixes).
 // Writes index.html to SITE_OUT (default data/site). LEAGUE_NAME overrides league.json's name (default "The Boys").
 // Usage: [SITE_OUT=/srv/hall-of-fame] [LEAGUE_NAME="The Boys"] npm run site
 import fs from 'node:fs';
@@ -9,7 +9,7 @@ import { buildHistory, headToHead } from '../src/history.js';
 import { playerStats, nameOnly } from '../src/players.js';
 import { tradeStats } from '../src/trades.js';
 import { sleeperPlayers } from '../src/sleeper-players.js';
-import { chooseSeasons, pickByYear } from '../src/sources.js';
+import { chooseSeasons, pickByYear, applyKeeperFixes } from '../src/sources.js';
 
 const read = (f, fallback) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : fallback);
 const out = process.env.SITE_OUT ?? 'data/site';
@@ -19,14 +19,7 @@ const out = process.env.SITE_OUT ?? 'data/site';
 const config = read('data/league.json', {});
 const seasons = chooseSeasons({ yahoo: read('data/yahoo-history.json', []), sleeper: read('data/sleeper-history.json', []) }, config);
 if (!seasons.length) throw new Error('No league data: add data/yahoo-history.json or run `npm run sleeper -- <league id>`');
-// data/keepers.json fixes keepers the platform didn't mark: { "2024": ["Sam LaPorta"] }.
-for (const [year, kept] of Object.entries(read('data/keepers.json', {}))) {
-  const s = seasons.find((x) => x.year == year);
-  for (const name of kept) {
-    const d = s?.draft.find((x) => nameOnly(x.player) === nameOnly(name));
-    if (d) d.keeper = true; else console.warn(`keepers.json: no ${year} pick named ${name}`);
-  }
-}
+for (const miss of applyKeeperFixes(seasons, read('data/keepers.json', {}))) console.warn(`keepers.json: no pick named ${miss}`);
 const both = (name) => ({ yahoo: read(`data/yahoo-${name}.json`, {}), sleeper: read(`data/sleeper-${name}.json`, {}) });
 const h = buildHistory(seasons, read('data/managers.json', {}));
 const lineups = pickByYear(seasons, both('lineups'));
@@ -53,7 +46,7 @@ const data = {
   league: process.env.LEAGUE_NAME ?? config.name ?? 'The Boys', built: new Date().toISOString().slice(0, 10),
   platforms: [...new Set(seasons.map((x) => ({ yahoo: 'Yahoo', sleeper: 'Sleeper' })[x.platform]))],
   managers: h.managers, records: h.records, awards: h.awards, rivalries, players, trades,
-  seasons: h.seasons.map((s) => ({ year: s.year, complete: s.complete, champion: s.champion?.manager, teams: s.teams, draft: s.draft.map((d) => [d.round, d.pick, d.player, d.manager]) })),
+  seasons: h.seasons.map((s) => ({ year: s.year, complete: s.complete, champion: s.champion?.manager, teams: s.teams, draft: s.draft.map((d) => [d.round, d.pick, d.player, d.manager, d.keeper ? 1 : 0]) })),
 };
 
 fs.mkdirSync(out, { recursive: true });

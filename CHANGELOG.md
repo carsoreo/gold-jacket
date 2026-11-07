@@ -2,6 +2,14 @@
 
 Versions follow [semantic versioning](https://semver.org).
 
+## 2.2.1 (2026-11-07)
+
+- The draft board shows keepers for a season still in progress. Before, Keeper badges only appeared once a season was graded, so 2026's board had none.
+- The Yahoo trades script waits and retries when Yahoo slows it down. Before, a throttled page read as a season with no trades.
+- `keepers.json` names match a live Yahoo season's draft names, which carry the player's team and position.
+- The README covers fixing keepers, in-progress seasons in the lineups script, and development.
+- Tests run the real build on a sample league, and CI tests Node 22 (the server) and 24.
+
 ## 2.2.0 (2026-11-05)
 
 - `data/keepers.json` marks keepers the platform missed, by year. Yahoo left the keeper icon off Luke's Sam LaPorta in 2024.

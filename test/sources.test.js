@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chooseSeasons, pickByYear, inRange } from '../src/sources.js';
+import { chooseSeasons, pickByYear, inRange, applyKeeperFixes } from '../src/sources.js';
 import { buildHistory } from '../src/history.js';
 
 const season = (year, tag) => ({ year, tag });
@@ -51,4 +51,13 @@ test('ranges are inclusive and open-ended when unset', () => {
   assert.ok(inRange(undefined, 1999));
   assert.ok(inRange({ from: 2027 }, 2027) && !inRange({ from: 2027 }, 2026));
   assert.ok(inRange({ through: 2026 }, 2026) && !inRange({ through: 2026 }, 2027));
+});
+
+test('keepers.json marks picks by name, however the platform spells them, and reports misses', () => {
+  const picks = ['C.J. Stroud', 'Kenneth Walker III', 'Jeremiyah Love (Ari - RB)', 'Sam LaPorta'].map((player, i) => ({ round: 12, pick: i + 1, player }));
+  const seasons = [{ year: 2024, draft: picks }];
+  const missing = applyKeeperFixes(seasons, { 2024: ['CJ Stroud', 'Kenneth Walker', 'Jeremiyah Love', 'Nobody'], 2019: ['Sam LaPorta'] });
+  assert.deepEqual(picks.map((d) => !!d.keeper), [true, true, true, false]);
+  assert.deepEqual(missing, ['2019 Sam LaPorta', '2024 Nobody']);
+  assert.deepEqual(applyKeeperFixes(seasons), []);
 });

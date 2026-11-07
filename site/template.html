@@ -316,7 +316,7 @@ function managerDraft(s, g, who) {
   const rows = mine.map(([d, n]) => {
     const p = byPick[n];
     const value = !p ? '' : p.keeper ? '<span class="dim">kept</span>' : signedPts(p.value);
-    return `<tr><td>${d[0]}</td><td class="r">${n}</td><td class="name">${esc(d[2])}${p?.keeper ? '<span class="po">Keeper</span>' : ''}</td><td>${p?.pos && p.pos !== 'UNK' ? p.pos : ''}</td><td class="r">${p ? pts(p.points) : ''}</td><td class="r">${p && !p.keeper ? pts(p.expected) : ''}</td><td class="r">${p && !p.keeper && p.value === Math.max(...mine.map(([, k]) => byPick[k]).filter((x) => x && !x.keeper).map((x) => x.value)) ? `<span class="flag">${value}</span>` : value}</td></tr>`;
+    return `<tr><td>${d[0]}</td><td class="r">${n}</td><td class="name">${esc(d[2])}${(p ? p.keeper : d[4]) ? '<span class="po">Keeper</span>' : ''}</td><td>${p?.pos && p.pos !== 'UNK' ? p.pos : ''}</td><td class="r">${p ? pts(p.points) : ''}</td><td class="r">${p && !p.keeper ? pts(p.expected) : ''}</td><td class="r">${p && !p.keeper && p.value === Math.max(...mine.map(([, k]) => byPick[k]).filter((x) => x && !x.keeper).map((x) => x.value)) ? `<span class="flag">${value}</span>` : value}</td></tr>`;
   });
   return head + table([['Rd'], ['Overall', 'r'], ['Player'], ['Pos'], ['Pts', 'r'], ['Expected', 'r'], ['Value', 'r']], rows) +
     (g ? `<p class="note">Expected is what picks at that spot at that position have scored in this league, on average. Keepers aren't graded.</p>` : '<p class="note">Points and grades come once the season is over.</p>');
@@ -332,7 +332,7 @@ function draft(year) {
   const grades = g ? `<h2>Draft grades</h2><p class="note">Points each manager's picks scored above what those draft spots usually score in this league, added up. Graded against every draft since ${D.seasons[0].year}. Keepers don't count.</p><dl class="awards grades">${g.teams.map((t, i) => `<div class="award${i === 0 ? ' top' : ''}"><dt>${t.grade}</dt><dd><button class="link" data-who="${esc(t.manager)}">${esc(t.manager)}</button> <small>${signedPts(t.value)} pts</small></dd></div>`).join('')}</dl>
     <div class="board">${list('Best value', g.steals.map((r) => [(r.surplus > 0 ? '+' : '') + r.surplus, `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `claimed ${r.pos}${r.posSlot}, ${r.posRank ? `finished ${r.pos}${r.posRank}` : 'never played'}`]))}${list('Worst early picks', g.busts.map((r) => [r.surplus, `${esc(r.player)} <span class="dim">by ${esc(r.manager)}</span>`, `claimed ${r.pos}${r.posSlot}, ${r.posRank ? `finished ${r.pos}${r.posRank}` : 'never played'}`]))}</div><h2>Draft board</h2>` : '';
   $('#draft').innerHTML = grades + table([['Rd'], ...Array.from({ length: perRound }, (_, i) => [`Pick ${i + 1}`])], Array.from({ length: rounds }, (_, r) =>
-    `<tr><th scope="row">${r + 1}</th>${s.draft.map((d, i) => [d, i + 1]).filter(([d]) => d[0] === r + 1).map(([d, n]) => `<td><b>${esc(d[2])}</b>${g?.keepers.includes(n) ? '<span class="po">Keeper</span>' : ''}<small>${esc(d[3])}${g ? ` · ${pts(g.points[n])}` : ''}</small></td>`).join('')}</tr>`), 'draft');
+    `<tr><th scope="row">${r + 1}</th>${s.draft.map((d, i) => [d, i + 1]).filter(([d]) => d[0] === r + 1).map(([d, n]) => `<td><b>${esc(d[2])}</b>${(g ? g.keepers.includes(n) : d[4]) ? '<span class="po">Keeper</span>' : ''}<small>${esc(d[3])}${g ? ` · ${pts(g.points[n])}` : ''}</small></td>`).join('')}</tr>`), 'draft');
 }
 // The manager list follows the season, since managers change.
 const draftManagers = (year) => {

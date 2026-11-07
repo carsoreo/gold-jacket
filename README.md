@@ -71,6 +71,7 @@ Yahoo doesn't let new apps use its API, so these scripts read your league's page
 Tips:
 - Yahoo slows down fast readers, so the scripts pause between pages. Leave the tab open.
 - If a script stops, run it again. It continues where it left off.
+- For a season still in progress, give the lineups script only the weeks that are final. A week read mid-week keeps its partial points.
 
 ## Leagues that switched platforms
 
@@ -114,7 +115,7 @@ Anyone left out shows up as a separate manager. The same file also merges a nick
 | `data/league.json` | `yahoo`, `sleeper` | Years each platform covers, as above |
 | `data/league.json` | `prefer` | Platform that wins a year both have |
 | `data/managers.json` | | Merges names across platforms and seasons |
-| `data/keepers.json` | | Keepers the platform didn't mark, by year: `{ "2024": ["Sam LaPorta"] }` |
+| `data/keepers.json` | | Keepers the platform missed, by year ([details](#fixing-keepers)) |
 | Environment | `SITE_OUT` | Folder to write the page to (default `data/site`) |
 | Environment | `LEAGUE_NAME` | League name, overriding `league.json` |
 
@@ -123,6 +124,17 @@ Anyone left out shows up as a separate manager. The same file also merges a nick
 - **Draft value:** where a player was taken at his position versus where he finished at it. "Claimed WR49, finished WR4" is +45. Keepers count as taken before the draft.
 - **Draft grades:** each pick is compared with what picks at that spot at that position have scored in your league (the 12th WR claimed, say). A draft's grade is those differences added up, measured against every draft in league history, so a strong year can have several A's and a weak one none. Keepers aren't graded.
 - **Trade winners** are the side whose new players scored more for them over the rest of that season. Draft picks are listed but not scored.
+- **Keepers** come from the platform: Sleeper always marks them, and Yahoo marks them with an icon on its draft results. For a Yahoo season with no marks at all, the site guesses from the league's other seasons: late-round picks of players the manager ended the year before with, up to the usual number per team.
+
+### Fixing keepers
+
+Platforms sometimes get keepers wrong, and a guess can be off (say the league kept 4 that year instead of 5). List the right ones by year in `data/keepers.json`:
+
+```json
+{ "2024": ["Sam LaPorta"] }
+```
+
+Names match however the platform spells them ("CJ Stroud" finds "C.J. Stroud"), and the build warns about any it can't find. A season with any keeper marked counts as fully marked, so for a season the platform didn't mark at all, list every keeper. That replaces the guess.
 
 ## Hosting
 
@@ -136,6 +148,27 @@ yourname.duckdns.org {
 ```
 
 To rebuild there: `git pull && SITE_OUT=/srv/hall-of-fame npm run site`.
+
+## Development
+
+No dependencies, just Node 22+. Tests use Node's built-in runner:
+
+```bash
+npm test
+```
+
+| Path | What's in it |
+|---|---|
+| `src/history.js` | Standings, records, awards and head-to-head from season results |
+| `src/players.js` | Player stats, keepers and draft grades from weekly lineups |
+| `src/trades.js` | Trade winners and trade records |
+| `src/sources.js` | Which platform each season comes from, and `keepers.json` fixes |
+| `src/sleeper.js` | Converts Sleeper's API responses to the shared season format |
+| `scripts/` | The build, the Sleeper collector and the Yahoo browser collectors |
+| `site/template.html` | The page: markup, styles and script in one file; the build injects the data |
+| `test/` | Unit tests per module, plus `build.test.js`, which runs the real build on a sample league |
+
+CI runs the tests on Node 22 and 24 for every push. The Yahoo browser collectors run in Yahoo's pages, so they aren't covered by tests; check a fresh collection against Yahoo by hand.
 
 ## License
 

@@ -4,6 +4,8 @@
 // About 10 teams x 17 weeks per season at a few seconds a page, so expect a couple of hours for seven seasons.
 // Progress is kept in localStorage, so rerunning picks up where it stopped.
 const SEASONS = [[2020, 20528, 16], [2021, 23769, 17], [2022, 137985, 17], [2023, 353218, 17], [2024, 64015, 17], [2025, 294769, 17], [2026, 190200, 8]]; // [year, league number, weeks]
+// For the season in progress, list only finished weeks: a week read mid-week keeps its partial points, since
+// weeks already saved are skipped. To reread one, remove it from localStorage `__lineups_<year>` first.
 const TEAMS = 10;
 
 (async () => {
